@@ -74,6 +74,24 @@ dev_dependencies:
   mocktail: ^1.0.5
   flutter_launcher_icons: ^0.14.4
 
+# Native-assets хук пакета sqlite3 (тянется транзитивно через drift; flutter_libs
+# теперь EOL и доставку делегирует сюда) по умолчанию КАЧАЕТ прекомпилированный
+# libsqlite3 с GitHub-релизов на каждой сборке. Из РФ это регулярно отваливается
+# по таймауту: сам GitHub доступен (IWR качает за 2 c), но Dart-овый HttpClient
+# уходит в таймаут (IPv6/системный прокси). Поэтому источник переключён на локальные
+# ПОДЛИННЫЕ бинарники из third_party/sqlite3/ (те же файлы релиза sqlite3-3.3.3 —
+# хук сверяет sha256). При сборке: ни сети, ни компилятора. Детали и обновление —
+# third_party/sqlite3/README.md.
+# ВАЖНО: user_defines глобальны → нужен бинарник под КАЖДУЮ целевую ABI, которую
+# собираешь. Сейчас лежат: arm64/arm/x64 Android + x64 Windows (для flutter test).
+# iOS-дайлибы добавить при первой сборке на macOS. При апгрейде версии sqlite3 —
+# перекачать файлы (хеши пиннятся к тегу релиза, см. README).
+hooks:
+  user_defines:
+    sqlite3:
+      source: test-sqlite3
+      directory: third_party/sqlite3/
+
 # Иконка приложения (генерится из логотипа): белая кисть-«K» на чёрном.
 # Генерация: dart run flutter_launcher_icons
 flutter_launcher_icons:
