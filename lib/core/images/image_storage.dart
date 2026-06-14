@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/painting.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
@@ -44,10 +45,22 @@ class ImageStorage {
   }
 
   /// Удалить оба файла картинки (вызывать ПОСЛЕ коммита БД).
+  /// Каждый файл — в своём try: частичный сбой удаления не должен срывать
+  /// успешную операцию выше (его добьёт sweeper). Заодно выгружаем кадр из
+  /// ImageCache (§7.3), иначе декодированные байты старого файла висят в памяти.
   Future<void> deleteFiles(String id) async {
     for (final f in [_paths.absFull(id), _paths.absThumb(id)]) {
-      if (await f.exists()) await f.delete();
+      try {
+        if (await f.exists()) await f.delete();
+      } catch (_) {/* не критично — реконсилит orphan-sweeper */}
+      _evictFromCache(f);
     }
+  }
+
+  void _evictFromCache(File f) {
+    try {
+      PaintingBinding.instance.imageCache.evict(FileImage(f));
+    } catch (_) {/* нет PaintingBinding (юнит-тест) — кеш не наш */}
   }
 
   /// Удалить файлы-сироты (нет ссылки в БД) и очистить `.tmp`.

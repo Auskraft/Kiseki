@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/di/injector.dart';
+import '../../../../core/images/image_storage.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/confirm_sheet.dart';
@@ -32,7 +33,8 @@ class MediaTrashPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => MediaTrashCubit(getIt<MediaRepository>()),
+      create: (_) =>
+          MediaTrashCubit(getIt<MediaRepository>(), getIt<ImageStorage>()),
       child: const _TrashView(),
     );
   }

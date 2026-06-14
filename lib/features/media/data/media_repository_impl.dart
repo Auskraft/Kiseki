@@ -249,7 +249,19 @@ class MediaRepositoryImpl implements MediaRepository {
     );
   }
 
+  /// CHECK-безопасные сезонные поля (§4.5.4, инвариант 4): только у `episodic`,
+  /// серия влечёт сезон. Нормализуем В РЕПОЗИТОРИИ, чтобы инвариант держался
+  /// для ЛЮБОГО вызывающего (импорт/мёрж/dev), а не только редактора.
+  (int?, int?, int?, int?) _seasonFields(MediaDraft d) {
+    if (d.format != MediaFormat.episodic) return (null, null, null, null);
+    final season = (d.currentEpisode != null && d.currentSeason == null)
+        ? 1
+        : d.currentSeason;
+    return (season, d.currentEpisode, d.totalSeasons, d.totalEpisodes);
+  }
+
   MediaItemsCompanion _mediaInsert(String id, MediaDraft d) {
+    final (season, episode, totalSeasons, totalEpisodes) = _seasonFields(d);
     return MediaItemsCompanion.insert(
       itemId: id,
       mediaType: d.mediaType,
@@ -257,24 +269,25 @@ class MediaRepositoryImpl implements MediaRepository {
       originalTitle: Value(d.originalTitle),
       year: Value(d.year),
       country: Value(d.country),
-      currentSeason: Value(d.currentSeason),
-      currentEpisode: Value(d.currentEpisode),
-      totalSeasons: Value(d.totalSeasons),
-      totalEpisodes: Value(d.totalEpisodes),
+      currentSeason: Value(season),
+      currentEpisode: Value(episode),
+      totalSeasons: Value(totalSeasons),
+      totalEpisodes: Value(totalEpisodes),
     );
   }
 
   MediaItemsCompanion _mediaUpdate(MediaDraft d) {
+    final (season, episode, totalSeasons, totalEpisodes) = _seasonFields(d);
     return MediaItemsCompanion(
       mediaType: Value(d.mediaType),
       format: Value(d.format),
       originalTitle: Value(d.originalTitle),
       year: Value(d.year),
       country: Value(d.country),
-      currentSeason: Value(d.currentSeason),
-      currentEpisode: Value(d.currentEpisode),
-      totalSeasons: Value(d.totalSeasons),
-      totalEpisodes: Value(d.totalEpisodes),
+      currentSeason: Value(season),
+      currentEpisode: Value(episode),
+      totalSeasons: Value(totalSeasons),
+      totalEpisodes: Value(totalEpisodes),
     );
   }
 

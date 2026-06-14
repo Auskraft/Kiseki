@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/di/injector.dart';
 import '../../../../core/images/media_paths.dart';
+import '../../../../core/images/media_spec.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../domain/media_entry.dart';
 import 'poster_placeholder.dart';
@@ -47,7 +48,8 @@ class CoverImage extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        cacheWidth: ((full ? 512 : 150) * dpr).round(),
+        cacheWidth:
+            ((full ? MediaSpec.fullEdge : MediaSpec.thumbEdge) * dpr).round(),
         gaplessPlayback: true,
         errorBuilder: (_, _, _) => placeholder,
       ),

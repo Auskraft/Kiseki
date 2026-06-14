@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kiseki/app/di/injector.dart';
 import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/core/images/image_processor.dart';
+import 'package:kiseki/core/images/image_storage.dart';
+import 'package:kiseki/core/images/media_paths.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
 import 'package:kiseki/core/theme/kiseki_themes.dart';
 import 'package:kiseki/features/media/data/media_repository_impl.dart';
@@ -16,6 +21,7 @@ import 'package:kiseki/features/media/presentation/pages/media_trash_page.dart';
 
 void main() {
   late AppDatabase db;
+  late Directory tmpRoot;
   late String entryId;
 
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
@@ -24,6 +30,9 @@ void main() {
     db = AppDatabase(NativeDatabase.memory());
     final repo = MediaRepositoryImpl(db);
     getIt.registerSingleton<MediaRepository>(repo);
+    tmpRoot = Directory.systemTemp.createTempSync('kiseki_trash_pg_');
+    getIt.registerSingleton<ImageStorage>(
+        ImageStorage(MediaPaths(tmpRoot), const FlutterImageProcessor()));
     entryId = await repo.create(const MediaDraft(
       title: 'Удалённый фильм',
       mediaType: MediaType.movie,
@@ -34,6 +43,7 @@ void main() {
   tearDown(() async {
     await getIt.reset();
     await db.close();
+    if (tmpRoot.existsSync()) tmpRoot.deleteSync(recursive: true);
   });
 
   testWidgets('корзина показывает запись и восстанавливает её', (tester) async {
