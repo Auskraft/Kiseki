@@ -490,6 +490,7 @@ class _Chip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.pill),
         child: Container(
           height: 32,
+          alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadii.pill),
