@@ -38,7 +38,10 @@ Future<void> runWipeAndRestart(BuildContext context) async {
   final restarter = RestartWidget.of(context);
   await restarter.reloadWith(() async {
     final root = getIt<MediaPaths>().root;
-    await getIt<AppDatabase>().close();
+    // close() может бросить на битой БД — не должно мешать удалению файлов.
+    try {
+      await getIt<AppDatabase>().close();
+    } catch (_) {}
     for (final ext in const ['', '-wal', '-shm']) {
       final f = File(p.join(root.path, '$kDbFileName$ext'));
       if (f.existsSync()) await f.delete();

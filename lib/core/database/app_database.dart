@@ -65,14 +65,21 @@ class AppDatabase extends _$AppDatabase {
 
   /// Лёгкая проверка целостности при старте (TECH_DESIGN §9). `PRAGMA
   /// quick_check` возвращает 'ok' для здоровой БД; иначе (или при исключении
-  /// открытия/чтения) считаем БД повреждённой → экран восстановления.
-  Future<bool> checkIntegrity() async {
+  /// открытия/создания/чтения) считаем БД повреждённой → экран восстановления.
+  Future<bool> checkIntegrity() async => (await integrityReport()).ok;
+
+  /// Как [checkIntegrity], но с технической причиной (для экрана восстановления
+  /// и диагностики): сообщение исключения открытия/миграции либо результат
+  /// quick_check, отличный от 'ok'.
+  Future<({bool ok, String? detail})> integrityReport() async {
     try {
       final rows = await customSelect('PRAGMA quick_check').get();
-      if (rows.isEmpty) return false;
-      return rows.first.data.values.first == 'ok';
-    } catch (_) {
-      return false;
+      if (rows.isEmpty) return (ok: false, detail: 'quick_check вернул пусто');
+      final v = rows.first.data.values.first;
+      if (v == 'ok') return (ok: true, detail: null);
+      return (ok: false, detail: 'quick_check: $v');
+    } catch (e) {
+      return (ok: false, detail: '$e');
     }
   }
 

@@ -30,6 +30,7 @@ class AppBootstrap extends StatefulWidget {
 
 class _AppBootstrapState extends State<AppBootstrap> {
   _Boot _status = _Boot.checking;
+  String? _detail; // техническая причина для экрана восстановления
 
   @override
   void initState() {
@@ -40,14 +41,20 @@ class _AppBootstrapState extends State<AppBootstrap> {
   Future<void> _run() async {
     // try/catch и вокруг getIt<AppDatabase>(): если reconfigure после неудачного
     // restore не поднял БД/DI, не зависаем на сплеше — показываем восстановление.
-    bool ok;
+    ({bool ok, String? detail}) report;
     try {
-      ok = await getIt<AppDatabase>().checkIntegrity();
-    } catch (_) {
-      ok = false;
+      report = await getIt<AppDatabase>().integrityReport();
+    } catch (e) {
+      report = (ok: false, detail: '$e');
     }
-    if (!ok) {
-      if (mounted) setState(() => _status = _Boot.corrupted);
+    if (!report.ok) {
+      debugPrint('AppBootstrap: БД не прошла проверку — ${report.detail}');
+      if (mounted) {
+        setState(() {
+          _status = _Boot.corrupted;
+          _detail = report.detail;
+        });
+      }
       return;
     }
     // Здоровая БД: dev-сид (debug) + чистка файлов-сирот — здесь, а не в main(),
@@ -76,7 +83,7 @@ class _AppBootstrapState extends State<AppBootstrap> {
     return switch (_status) {
       _Boot.ready => const KisekiApp(),
       _Boot.checking => _wrap(const _Splash()),
-      _Boot.corrupted => _wrap(const DbRecoveryScreen()),
+      _Boot.corrupted => _wrap(DbRecoveryScreen(detail: _detail)),
     };
   }
 

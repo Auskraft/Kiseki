@@ -15,7 +15,11 @@ import 'restore_flow.dart';
 /// При успехе любого из действий дерево перезапускается (RestartWidget),
 /// [AppBootstrap] перепроверяет БД и пускает в приложение.
 class DbRecoveryScreen extends StatefulWidget {
-  const DbRecoveryScreen({super.key});
+  const DbRecoveryScreen({super.key, this.detail});
+
+  /// Техническая причина (сообщение sqlite/миграции либо результат quick_check)
+  /// — показывается мелким текстом для диагностики.
+  final String? detail;
 
   @override
   State<DbRecoveryScreen> createState() => _DbRecoveryScreenState();
@@ -116,6 +120,24 @@ class _DbRecoveryScreenState extends State<DbRecoveryScreen> {
                   style: text.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
+                if (widget.detail != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: tk.surface2,
+                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                      border: Border.all(color: tk.outlineSoft),
+                    ),
+                    child: SelectableText(
+                      widget.detail!,
+                      style: text.bodySmall?.copyWith(color: tk.onMuted),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
                 if (_error != null) ...[
                   const SizedBox(height: 16),
                   Container(
