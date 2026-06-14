@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/di/injector.dart';
+import '../../../../app/router/app_router.dart';
 import '../../../../core/catalog/tag_repository.dart';
 import '../../../../core/catalog/watch_status.dart';
 import '../../../../core/theme/app_dimens.dart';
@@ -17,9 +19,6 @@ import '../widgets/filter_sheet.dart';
 import '../widgets/media_card.dart';
 import '../widgets/media_list_tile.dart';
 import '../widgets/mini_poster.dart';
-import 'media_detail_page.dart';
-import 'media_editor_page.dart';
-import 'settings_page.dart';
 
 /// Главный экран — грид/список картотеки + полки «Жду серии»/«Смотрю сейчас»,
 /// поиск, фильтр и сортировка.
@@ -48,12 +47,12 @@ class MainScreen extends StatelessWidget {
   }
 }
 
-void _openEditor(BuildContext context, {String? entryId}) {
-  Navigator.of(context).push(MediaEditorPage.route(entryId: entryId));
+void _openEditor(BuildContext context) {
+  context.push(AppRoute.editor);
 }
 
 void _openDetail(BuildContext context, String entryId) {
-  Navigator.of(context).push(MediaDetailPage.route(entryId: entryId));
+  context.push(AppRoute.detail(entryId));
 }
 
 class _HomeContent extends StatelessWidget {
@@ -186,7 +185,7 @@ class _Header extends StatelessWidget {
           ),
           _CircleButton(
             icon: Icons.settings_outlined,
-            onTap: () => Navigator.of(context).push(SettingsPage.route()),
+            onTap: () => context.push(AppRoute.settings),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kiseki/app/di/injector.dart';
 import 'package:kiseki/core/catalog/tag_repository.dart';
@@ -40,18 +41,28 @@ void main() {
   });
 
   testWidgets('форма создаёт карточку и возвращается назад', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
-      home: Builder(
-        builder: (ctx) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () => Navigator.push(ctx, MediaEditorPage.route()),
-              child: const Text('open'),
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => context.push('/editor'),
+                child: const Text('open'),
+              ),
             ),
           ),
         ),
-      ),
+        GoRoute(
+          path: '/editor',
+          builder: (context, state) => const MediaEditorPage(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(
+      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
+      routerConfig: router,
     ));
 
     await tester.tap(find.text('open'));

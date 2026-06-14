@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kiseki/app/di/injector.dart';
 import 'package:kiseki/core/catalog/tag_repository.dart';
@@ -42,19 +43,28 @@ void main() {
 
   testWidgets('деталь рендерит карточку и переключает избранное',
       (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
-      home: Builder(
-        builder: (ctx) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () => Navigator.push(
-                  ctx, MediaDetailPage.route(entryId: entryId)),
-              child: const Text('open'),
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => context.push('/detail'),
+                child: const Text('open'),
+              ),
             ),
           ),
         ),
-      ),
+        GoRoute(
+          path: '/detail',
+          builder: (context, state) => MediaDetailPage(entryId: entryId),
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(
+      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
+      routerConfig: router,
     ));
 
     await tester.tap(find.text('open'));

@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/di/injector.dart';
 import '../../../../app/restore_flow.dart';
+import '../../../../app/router/app_router.dart';
 import '../../../../core/backup/backup_archive.dart';
 import '../../../../core/backup/backup_cubit.dart';
 import '../../../../core/backup/yandex_disk_service.dart';
@@ -14,16 +16,11 @@ import '../../../../core/theme/kiseki_theme_id.dart';
 import '../../../../core/theme/kiseki_themes.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/theme/theme_cubit.dart';
-import 'media_trash_page.dart';
-import 'tags_page.dart';
 
 /// Экран 06 — настройки: оформление, доступ к тегам/корзине, бэкап (стаб),
 /// язык, о приложении. Хаб приложения (заменяет боттомшит выбора темы).
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
-
-  static Route<void> route() =>
-      MaterialPageRoute(builder: (_) => const SettingsPage());
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +65,7 @@ class _TopBar extends StatelessWidget {
         children: [
           IconButton(
             icon: Icon(Icons.arrow_back_rounded, color: tk.onBg),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => context.pop(),
           ),
           Text('Настройки', style: Theme.of(context).textTheme.titleMedium),
         ],
@@ -466,13 +463,13 @@ class _CatalogCard extends StatelessWidget {
           _Row(
             icon: Icons.label_outline_rounded,
             title: 'Теги',
-            onTap: () => Navigator.of(context).push(TagsPage.route()),
+            onTap: () => context.push(AppRoute.tags),
           ),
           const _Divider(),
           _Row(
             icon: Icons.delete_outline_rounded,
             title: 'Корзина',
-            onTap: () => Navigator.of(context).push(MediaTrashPage.route()),
+            onTap: () => context.push(AppRoute.trash),
           ),
         ],
       ),

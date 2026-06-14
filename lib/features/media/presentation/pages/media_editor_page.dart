@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../app/di/injector.dart';
@@ -23,16 +24,12 @@ import '../widgets/editor/rating_input.dart';
 import '../widgets/editor/tag_editor.dart';
 
 /// Экран 03 — создание/редактирование карточки медиа (прогрессивное раскрытие).
-/// Без go_router (A4 отложен) — открывается `Navigator.push(MediaEditorPage.route())`.
+/// Открывается через go_router: `/editor` (создание) или `/item/<id>/edit`.
 class MediaEditorPage extends StatelessWidget {
   const MediaEditorPage({super.key, this.entryId});
 
   /// `null` — создание новой; иначе — редактирование существующей карточки.
   final String? entryId;
-
-  static Route<void> route({String? entryId}) => MaterialPageRoute(
-        builder: (_) => MediaEditorPage(entryId: entryId),
-      );
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +106,7 @@ class _EditorFormState extends State<_EditorForm> {
       );
       if (discard != true) return;
     }
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) context.pop();
   }
 
   Future<void> _pickCover(BuildContext context) async {
@@ -165,7 +162,7 @@ class _EditorFormState extends State<_EditorForm> {
           a.justSaved != b.justSaved || a.errorMessage != b.errorMessage,
       listener: (context, state) {
         if (state.justSaved) {
-          Navigator.of(context).pop();
+          context.pop();
         } else if (state.errorMessage != null) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()

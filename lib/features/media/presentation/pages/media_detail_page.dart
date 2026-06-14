@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../app/di/injector.dart';
+import '../../../../app/router/app_router.dart';
 import '../../../../core/catalog/catalog_date.dart';
 import '../../../../core/catalog/date_precision.dart';
 import '../../../../core/catalog/tag.dart';
@@ -19,7 +21,6 @@ import '../../domain/media_repository.dart';
 import '../cubit/media_detail_cubit.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/status_change_sheet.dart';
-import 'media_editor_page.dart';
 
 /// Экран 02 — детальная карточка медиа. Реактивно следит за записью и даёт
 /// быстрые действия (смена статуса, избранное, +1 пересмотр, правка, корзина).
@@ -27,10 +28,6 @@ class MediaDetailPage extends StatelessWidget {
   const MediaDetailPage({super.key, required this.entryId});
 
   final String entryId;
-
-  static Route<void> route({required String entryId}) => MaterialPageRoute(
-        builder: (_) => MediaDetailPage(entryId: entryId),
-      );
 
   @override
   Widget build(BuildContext context) {
@@ -89,9 +86,9 @@ class _DetailView extends StatelessWidget {
   }
 
   Future<void> _delete(BuildContext context) async {
-    final navigator = Navigator.of(context);
+    final router = GoRouter.of(context);
     await context.read<MediaDetailCubit>().softDelete();
-    navigator.pop();
+    router.pop();
   }
 
   @override
@@ -135,8 +132,7 @@ class _DetailView extends StatelessWidget {
                 ),
                 const SizedBox(height: 22),
                 _Actions(
-                  onEdit: () => Navigator.of(context)
-                      .push(MediaEditorPage.route(entryId: entry.id)),
+                  onEdit: () => context.push(AppRoute.edit(entry.id)),
                   onDelete: () => _delete(context),
                 ),
               ],
@@ -195,7 +191,7 @@ class _Cover extends StatelessWidget {
               children: [
                 _GlassButton(
                   icon: Icons.arrow_back_rounded,
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () => context.pop(),
                 ),
                 const Spacer(),
                 _GlassButton(
@@ -296,10 +292,10 @@ class _MoreButton extends StatelessWidget {
         onSelected: (v) {
           final cubit = context.read<MediaDetailCubit>();
           if (v == 'edit') {
-            Navigator.of(context).push(MediaEditorPage.route(entryId: entry.id));
+            context.push(AppRoute.edit(entry.id));
           } else if (v == 'trash') {
-            final navigator = Navigator.of(context);
-            cubit.softDelete().then((_) => navigator.pop());
+            final router = GoRouter.of(context);
+            cubit.softDelete().then((_) => router.pop());
           }
         },
         itemBuilder: (_) => const [

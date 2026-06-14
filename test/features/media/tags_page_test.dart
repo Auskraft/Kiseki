@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kiseki/app/di/injector.dart';
 import 'package:kiseki/core/catalog/tag_repository.dart';
@@ -27,18 +28,28 @@ void main() {
   });
 
   testWidgets('экран тегов показывает тег и создаёт новый', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
-      home: Builder(
-        builder: (ctx) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () => Navigator.push(ctx, TagsPage.route()),
-              child: const Text('open'),
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => context.push('/tags'),
+                child: const Text('open'),
+              ),
             ),
           ),
         ),
-      ),
+        GoRoute(
+          path: '/tags',
+          builder: (context, state) => const TagsPage(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(
+      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
+      routerConfig: router,
     ));
 
     await tester.tap(find.text('open'));

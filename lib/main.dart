@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/di/injector.dart';
+import 'app/router/app_router.dart';
 import 'core/catalog/tag_repository.dart';
 import 'core/images/image_storage.dart';
 import 'core/theme/app_dimens.dart';
@@ -16,7 +18,6 @@ import 'dev/demo_seed.dart';
 import 'features/media/domain/media_query.dart';
 import 'features/media/domain/media_repository.dart';
 import 'features/media/presentation/cubit/media_list_cubit.dart';
-import 'features/media/presentation/pages/main_screen.dart';
 import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
@@ -43,8 +44,18 @@ Future<void> main() async {
   runApp(const RestartWidget(child: KisekiApp()));
 }
 
-class KisekiApp extends StatelessWidget {
+class KisekiApp extends StatefulWidget {
   const KisekiApp({super.key});
+
+  @override
+  State<KisekiApp> createState() => _KisekiAppState();
+}
+
+class _KisekiAppState extends State<KisekiApp> {
+  // Один экземпляр на монтирование дерева: переживает пересборку темы и
+  // сбрасывается на старт при Replace-all восстановлении (RestartWidget
+  // перемонтирует дерево с новым ключом → новый State → новый роутер).
+  final GoRouter _router = createAppRouter();
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +66,7 @@ class KisekiApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {
-          return MaterialApp(
+          return MaterialApp.router(
             onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -65,7 +76,7 @@ class KisekiApp extends StatelessWidget {
             darkTheme: buildKisekiTheme(themeState.themeId, Brightness.dark),
             themeMode: themeState.themeMode,
             themeAnimationDuration: AppDurations.themeMorph,
-            home: const MainScreen(),
+            routerConfig: _router,
           );
         },
       ),

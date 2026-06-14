@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/di/injector.dart';
 import '../../../../core/catalog/tag.dart';
@@ -19,9 +20,6 @@ const _tagPalette = <String>[
 /// Экран 05 — управление тегами: переименование, цвет, слияние, удаление.
 class TagsPage extends StatelessWidget {
   const TagsPage({super.key});
-
-  static Route<void> route() =>
-      MaterialPageRoute(builder: (_) => const TagsPage());
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +103,7 @@ class _TopBar extends StatelessWidget {
         children: [
           IconButton(
             icon: Icon(Icons.arrow_back_rounded, color: tk.onBg),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => context.pop(),
           ),
           Text('Теги', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(width: 8),

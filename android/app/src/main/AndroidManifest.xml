@@ -23,6 +23,13 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- go_router отвечает только за навигацию внутри приложения; OS-level
+                 deep-linking отключаем, чтобы OAuth-редирект Я.Диска
+                 (com.auskraft.kiseki://oauth) ловил только app_links, а не роутер. -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false"
+              />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
