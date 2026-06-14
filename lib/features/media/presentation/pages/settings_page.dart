@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/di/injector.dart';
+import '../../../../app/restore_flow.dart';
 import '../../../../core/backup/backup_archive.dart';
 import '../../../../core/backup/backup_cubit.dart';
 import '../../../../core/backup/yandex_disk_service.dart';
 import '../../../../core/theme/app_dimens.dart';
+import '../../../../core/ui/confirm_sheet.dart';
 import '../../../../core/theme/kiseki_theme_id.dart';
 import '../../../../core/theme/kiseki_themes.dart';
 import '../../../../core/theme/theme_context.dart';
@@ -146,6 +150,34 @@ class _BackupCard extends StatelessWidget {
       ..showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  /// Replace-all восстановление: подтверждение → прогресс → [runRestore]
+  /// (при успехе перезапускает дерево, этот экран демонтируется).
+  Future<void> _restore(BuildContext context) async {
+    final ok = await showConfirmDeleteSheet(
+      context,
+      title: 'Восстановить из бэкапа?',
+      message: 'Текущие карточки и картинки будут заменены копией с Я.Диска. '
+          'Это действие необратимо.',
+      confirmLabel: 'Восстановить',
+    );
+    if (!ok || !context.mounted) return;
+
+    unawaited(showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    ));
+    try {
+      await runRestore(context);
+      // Успех → дерево перезапущено, дальше выполнять нечего.
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // закрыть прогресс
+      _snack(context,
+          e is BackupException ? e.message : 'Не удалось восстановить');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
@@ -234,18 +266,19 @@ class _BackupCard extends StatelessWidget {
                   busy: state.busy,
                   onTap: cubit.backupNow,
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: state.busy ? null : cubit.disconnect,
-                      child:
-                          Text('Отвязать', style: TextStyle(color: tk.onMuted)),
-                    ),
-                    const Spacer(),
-                    Text('Восстановление — скоро',
-                        style: text.bodySmall?.copyWith(color: tk.onFaint)),
-                  ],
+                const SizedBox(height: 9),
+                _RestoreButton(
+                  busy: state.busy,
+                  onTap: () => _restore(context),
+                ),
+                const SizedBox(height: 2),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: state.busy ? null : cubit.disconnect,
+                    child:
+                        Text('Отвязать', style: TextStyle(color: tk.onMuted)),
+                  ),
                 ),
               ],
             ],
@@ -284,6 +317,52 @@ class _BackupButton extends StatelessWidget {
               )
             : Icon(icon, size: 18),
         label: Text(busy ? 'Подождите…' : label),
+      ),
+    );
+  }
+}
+
+class _RestoreButton extends StatelessWidget {
+  const _RestoreButton({required this.busy, required this.onTap});
+
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    final warn = Color.alphaBlend(tk.warning.withValues(alpha: 0.85), tk.onBg);
+    return Material(
+      color: tk.tint(tk.warning, 0.12),
+      borderRadius: BorderRadius.circular(AppRadii.sm),
+      child: InkWell(
+        onTap: busy ? null : onTap,
+        borderRadius: BorderRadius.circular(AppRadii.sm),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+          child: Row(
+            children: [
+              Icon(Icons.settings_backup_restore_rounded,
+                  size: 19, color: tk.warning),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Восстановить из бэкапа',
+                        style: TextStyle(
+                            fontSize: 13.5 * uiScale,
+                            fontWeight: FontWeight.w600,
+                            color: warn)),
+                    Text('Заменит локальные данные',
+                        style: TextStyle(
+                            fontSize: 11.5 * uiScale, color: tk.onMuted)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

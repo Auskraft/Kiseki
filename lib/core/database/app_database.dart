@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
 
 import '../../features/media/data/media_converters.dart';
 import '../../features/media/data/tables/media_items.dart';
@@ -18,6 +17,10 @@ import 'tables/tags.dart';
 
 part 'app_database.g.dart';
 
+/// Имя файла БД в каталоге приложения (рядом с `media/`, §7.2).
+/// Используется и при открытии, и при restore (подмена файла).
+const String kDbFileName = 'kiseki.sqlite';
+
 /// Корневая БД приложения (Drift поверх SQLite).
 ///
 /// Список таблиц в `@DriftDatabase` — единственная вынужденная точка касания
@@ -26,9 +29,6 @@ part 'app_database.g.dart';
 @DriftDatabase(tables: [CatalogItems, MediaItems, Images, Tags, ItemTags])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
-
-  /// Боевое подключение: файл `kiseki.sqlite` в каталоге приложения.
-  factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'kiseki'));
 
   @override
   int get schemaVersion => 1;

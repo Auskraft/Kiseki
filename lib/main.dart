@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/di/injector.dart';
 import 'core/catalog/tag_repository.dart';
 import 'core/theme/app_dimens.dart';
+import 'core/ui/restart_widget.dart';
 import 'core/theme/kiseki_themes.dart';
 import 'core/theme/theme_cubit.dart';
 import 'dev/demo_seed.dart';
@@ -28,7 +29,7 @@ Future<void> main() async {
     }
   }
 
-  runApp(const KisekiApp());
+  runApp(const RestartWidget(child: KisekiApp()));
 }
 
 class KisekiApp extends StatelessWidget {

@@ -29,6 +29,32 @@ class UnpackedBackup {
   File get snapshot => File(p.join(dir.path, 'snapshot.sqlite'));
   Directory get imagesDir => Directory(p.join(dir.path, 'images'));
 
+  /// Replace-all: кладёт снимок в [dbFile] и картинки в `<mediaRoot>/media/`
+  /// (заменяя текущие). БД должна быть уже ЗАКРЫТА вызывающим. Sidecar-файлы
+  /// WAL/SHM старой БД удаляются — снимок самодостаточен.
+  Future<void> applyTo({
+    required File dbFile,
+    required Directory mediaRoot,
+  }) async {
+    await snapshot.copy(dbFile.path);
+    for (final ext in const ['-wal', '-shm']) {
+      final f = File('${dbFile.path}$ext');
+      if (f.existsSync()) await f.delete();
+    }
+
+    final media = Directory(p.join(mediaRoot.path, 'media'));
+    if (media.existsSync()) await media.delete(recursive: true);
+    for (final sub in const ['full', 'thumb']) {
+      final src = Directory(p.join(dir.path, 'images', sub));
+      if (!src.existsSync()) continue;
+      final dst = Directory(p.join(media.path, sub))
+        ..createSync(recursive: true);
+      for (final f in src.listSync().whereType<File>()) {
+        await f.copy(p.join(dst.path, p.basename(f.path)));
+      }
+    }
+  }
+
   Future<void> dispose() async {
     if (dir.existsSync()) await dir.delete(recursive: true);
   }

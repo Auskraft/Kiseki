@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:drift/native.dart';
 import 'package:get_it/get_it.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,10 +27,13 @@ Future<void> configureDependencies() async {
   final prefs = await SharedPreferences.getInstance();
   getIt.registerSingleton<SharedPreferences>(prefs);
 
-  final db = AppDatabase.open();
+  // БД лежит в каталоге приложения рядом с media/ (§7.2) — явный путь нужен
+  // для restore (подмена файла). NativeDatabase (не background-isolate) —
+  // детерминированное закрытие перед подменой файла.
+  final supportDir = await getApplicationSupportDirectory();
+  final db = AppDatabase(NativeDatabase(File(p.join(supportDir.path, kDbFileName))));
   getIt.registerSingleton<AppDatabase>(db);
 
-  final supportDir = await getApplicationSupportDirectory();
   getIt.registerSingleton<MediaPaths>(MediaPaths(supportDir));
   getIt.registerSingleton<ImageProcessor>(const FlutterImageProcessor());
   getIt.registerLazySingleton<ImageStorage>(

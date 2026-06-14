@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:kiseki/core/backup/backup_archive.dart';
 import 'package:kiseki/core/database/app_database.dart';
 import 'package:kiseki/core/images/media_paths.dart';
@@ -55,6 +56,25 @@ void main() {
         .customSelect('SELECT title FROM catalog_items ORDER BY title')
         .get();
     expect(rows.map((r) => r.read<String>('title')), ['Дюна', 'Матрица']);
+  });
+
+  test('applyTo восстанавливает снимок в целевой файл БД', () async {
+    await repo.create(movie('Дюна'));
+    final unpacked = await archive.unpack(await archive.pack());
+    addTearDown(unpacked.dispose);
+
+    final targetRoot = Directory.systemTemp.createTempSync('kiseki_restore_');
+    addTearDown(() => targetRoot.deleteSync(recursive: true));
+    final dbFile = File(p.join(targetRoot.path, 'kiseki.sqlite'));
+
+    await unpacked.applyTo(dbFile: dbFile, mediaRoot: targetRoot);
+    expect(dbFile.existsSync(), isTrue);
+
+    final restored = AppDatabase(NativeDatabase(dbFile));
+    addTearDown(restored.close);
+    final rows =
+        await restored.customSelect('SELECT title FROM catalog_items').get();
+    expect(rows.map((r) => r.read<String>('title')), ['Дюна']);
   });
 
   test('unpack отвергает не-архив', () async {
