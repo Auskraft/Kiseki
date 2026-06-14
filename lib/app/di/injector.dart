@@ -2,6 +2,8 @@ import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/backup/backup_archive.dart';
+import '../../core/backup/yandex_disk_service.dart';
 import '../../core/catalog/tag_repository.dart';
 import '../../core/catalog/tag_repository_impl.dart';
 import '../../core/database/app_database.dart';
@@ -36,5 +38,13 @@ Future<void> configureDependencies() async {
   );
   getIt.registerLazySingleton<MediaRepository>(
     () => MediaRepositoryImpl(getIt<AppDatabase>()),
+  );
+
+  // Бэкап на Я.Диск (Этап F).
+  getIt.registerLazySingleton<YandexDiskService>(
+    () => YandexDiskService(getIt<SharedPreferences>()),
+  );
+  getIt.registerLazySingleton<BackupArchive>(
+    () => BackupArchive(getIt<AppDatabase>(), getIt<MediaPaths>()),
   );
 }

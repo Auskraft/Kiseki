@@ -55,4 +55,16 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(ftsRebuildClear);
     await customStatement(ftsRebuildFill);
   }
+
+  /// Транзакционно-консистентный снимок БД в файл [path] (для бэкапа, §8.1).
+  /// `VACUUM INTO` корректно учитывает WAL и не требует остановки записи.
+  Future<void> snapshotInto(String path) async {
+    final escaped = path.replaceAll("'", "''");
+    await customStatement("VACUUM INTO '$escaped'");
+    // VACUUM может сбросить user_version — проставляем явно, иначе при открытии
+    // снимка Drift примет его за новую БД и запустит onCreate (createAll упадёт).
+    await customStatement("ATTACH DATABASE '$escaped' AS _snap");
+    await customStatement('PRAGMA _snap.user_version = $schemaVersion');
+    await customStatement('DETACH DATABASE _snap');
+  }
 }

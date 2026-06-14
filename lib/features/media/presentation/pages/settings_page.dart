@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/di/injector.dart';
+import '../../../../core/backup/backup_archive.dart';
+import '../../../../core/backup/backup_cubit.dart';
+import '../../../../core/backup/yandex_disk_service.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/kiseki_theme_id.dart';
 import '../../../../core/theme/kiseki_themes.dart';
@@ -30,7 +34,7 @@ class SettingsPage extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 children: const [
                   _SectionTitle('Резервная копия'),
-                  _BackupCard(),
+                  _BackupSection(),
                   SizedBox(height: 20),
                   _SectionTitle('Внешний вид'),
                   _AppearanceCard(),
@@ -114,74 +118,172 @@ class _Card extends StatelessWidget {
 
 // ─────────────────────────── бэкап (стаб) ────────────────────────────────
 
+String _fmtDateTime(DateTime d) {
+  final l = d.toLocal();
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${two(l.day)}.${two(l.month)}.${l.year} ${two(l.hour)}:${two(l.minute)}';
+}
+
+class _BackupSection extends StatelessWidget {
+  const _BackupSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          BackupCubit(getIt<YandexDiskService>(), getIt<BackupArchive>()),
+      child: const _BackupCard(),
+    );
+  }
+}
+
 class _BackupCard extends StatelessWidget {
   const _BackupCard();
+
+  void _snack(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
+  }
 
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
-    return _Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final text = Theme.of(context).textTheme;
+    return BlocConsumer<BackupCubit, BackupState>(
+      listenWhen: (a, b) =>
+          a.justBackedUp != b.justBackedUp || a.error != b.error,
+      listener: (context, state) {
+        if (state.justBackedUp) {
+          _snack(context, 'Бэкап загружен на Я.Диск');
+        } else if (state.error != null) {
+          _snack(context, state.error!);
+        }
+      },
+      builder: (context, state) {
+        final cubit = context.read<BackupCubit>();
+        return _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: tk.tint(tk.primary, 0.16),
-                  borderRadius: BorderRadius.circular(AppRadii.sm),
-                ),
-                child: Icon(Icons.cloud_outlined, color: tk.primary, size: 20),
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: tk.tint(tk.primary, 0.16),
+                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                    ),
+                    child:
+                        Icon(Icons.cloud_outlined, color: tk.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Яндекс.Диск', style: text.bodyLarge),
+                        const SizedBox(height: 2),
+                        if (state.linked)
+                          Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded,
+                                  size: 13, color: tk.success),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  state.account == null
+                                      ? 'Подключён'
+                                      : 'Подключён · ${state.account}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: text.bodySmall
+                                      ?.copyWith(color: tk.success),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Text('не подключён', style: text.bodySmall),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 14),
+              if (!state.linked)
+                _BackupButton(
+                  label: 'Подключить Я.Диск',
+                  icon: Icons.link_rounded,
+                  busy: state.busy,
+                  onTap: cubit.connect,
+                )
+              else ...[
+                Text(
+                  state.lastBackup == null
+                      ? 'Бэкапов ещё не было'
+                      : 'Последний бэкап: ${_fmtDateTime(state.lastBackup!)}',
+                  style: text.bodySmall,
+                ),
+                const SizedBox(height: 10),
+                _BackupButton(
+                  label: 'Сделать бэкап',
+                  icon: Icons.cloud_upload_outlined,
+                  busy: state.busy,
+                  onTap: cubit.backupNow,
+                ),
+                const SizedBox(height: 6),
+                Row(
                   children: [
-                    Text('Яндекс.Диск',
-                        style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 2),
-                    Text('не подключён',
-                        style: Theme.of(context).textTheme.bodySmall),
+                    TextButton(
+                      onPressed: state.busy ? null : cubit.disconnect,
+                      child:
+                          Text('Отвязать', style: TextStyle(color: tk.onMuted)),
+                    ),
+                    const Spacer(),
+                    Text('Восстановление — скоро',
+                        style: text.bodySmall?.copyWith(color: tk.onFaint)),
                   ],
                 ),
-              ),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-            decoration: BoxDecoration(
-              color: tk.tint(tk.warning, 0.12),
-              borderRadius: BorderRadius.circular(AppRadii.sm),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.construction_rounded, size: 15, color: tk.warning),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Резервное копирование на Яндекс.Диск — в разработке.',
-                    style: TextStyle(fontSize: 12 * uiScale, color: tk.onMuted),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: FilledButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-              label: const Text('Сделать бэкап'),
-            ),
-          ),
-        ],
+        );
+      },
+    );
+  }
+}
+
+class _BackupButton extends StatelessWidget {
+  const _BackupButton({
+    required this.label,
+    required this.icon,
+    required this.busy,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 44,
+      child: FilledButton.icon(
+        onPressed: busy ? null : onTap,
+        icon: busy
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(icon, size: 18),
+        label: Text(busy ? 'Подождите…' : label),
       ),
     );
   }

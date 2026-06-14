@@ -50,6 +50,12 @@ dependencies:
   flutter_image_compress: ^2.4.0
   google_fonts: ^8.1.0
   shared_preferences: ^2.5.5
+  # Бэкап на Яндекс.Диск (Этап F): OAuth deep-link + REST + .kiseki-архив.
+  http: ^1.2.1
+  url_launcher: ^6.2.5
+  app_links: ^6.3.4
+  archive: ^3.6.1
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:

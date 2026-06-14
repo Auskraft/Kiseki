@@ -1,7 +1,15 @@
+import 'dart:io';
+
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kiseki/app/di/injector.dart';
+import 'package:kiseki/core/backup/backup_archive.dart';
+import 'package:kiseki/core/backup/yandex_disk_service.dart';
+import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/core/images/media_paths.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
 import 'package:kiseki/core/theme/kiseki_themes.dart';
 import 'package:kiseki/core/theme/theme_cubit.dart';
@@ -9,10 +17,27 @@ import 'package:kiseki/features/media/presentation/pages/settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  late AppDatabase db;
+  late Directory tmpRoot;
+
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  testWidgets('настройки рендерятся и меняют тему', (tester) async {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    db = AppDatabase(NativeDatabase.memory());
+    tmpRoot = Directory.systemTemp.createTempSync('kiseki_settings_test_');
+    getIt.registerSingleton<YandexDiskService>(YandexDiskService(prefs));
+    getIt.registerSingleton<BackupArchive>(
+        BackupArchive(db, MediaPaths(tmpRoot)));
+  });
+  tearDown(() async {
+    await getIt.reset();
+    await db.close();
+    if (tmpRoot.existsSync()) tmpRoot.deleteSync(recursive: true);
+  });
+
+  testWidgets('настройки рендерятся и меняют тему', (tester) async {
     final prefs = await SharedPreferences.getInstance();
     final themeCubit = ThemeCubit(prefs);
     addTearDown(themeCubit.close);
@@ -24,7 +49,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Настройки'), findsOneWidget);
-    expect(find.text('Сделать бэкап'), findsOneWidget);
+    expect(find.text('Подключить Я.Диск'), findsOneWidget);
 
     // Смена темы свотчем отражается в ThemeCubit.
     expect(themeCubit.state.themeId, KisekiThemeId.base);
