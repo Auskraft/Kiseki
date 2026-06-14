@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/nav/main_shell.dart';
 import '../../core/nav/nav_style_picker_page.dart';
 import '../../core/theme/theme_context.dart';
-import '../../features/media/presentation/pages/main_screen.dart';
 import '../../features/media/presentation/pages/media_detail_page.dart';
 import '../../features/media/presentation/pages/media_editor_page.dart';
 import '../../features/media/presentation/pages/media_trash_page.dart';
@@ -44,7 +44,7 @@ GoRouter createAppRouter() => GoRouter(
       routes: [
         GoRoute(
           path: AppRoute.home,
-          builder: (context, state) => const MainScreen(),
+          builder: (context, state) => const MainShell(),
         ),
         GoRoute(
           path: AppRoute.editor,

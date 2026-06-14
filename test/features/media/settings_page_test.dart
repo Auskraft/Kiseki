@@ -10,6 +10,7 @@ import 'package:kiseki/core/backup/backup_archive.dart';
 import 'package:kiseki/core/backup/yandex_disk_service.dart';
 import 'package:kiseki/core/database/app_database.dart';
 import 'package:kiseki/core/images/media_paths.dart';
+import 'package:kiseki/core/nav/nav_style.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
 import 'package:kiseki/core/theme/kiseki_themes.dart';
 import 'package:kiseki/core/theme/theme_cubit.dart';
@@ -44,7 +45,13 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(
       theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
-      home: BlocProvider.value(value: themeCubit, child: const SettingsPage()),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: themeCubit),
+          BlocProvider(create: (_) => NavStyleCubit(prefs)),
+        ],
+        child: const SettingsPage(),
+      ),
     ));
     await tester.pumpAndSettle();
 

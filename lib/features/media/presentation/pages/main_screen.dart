@@ -39,11 +39,6 @@ class MainScreen extends StatelessWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openEditor(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Добавить'),
-      ),
     );
   }
 }
@@ -113,7 +108,7 @@ class _GridSliver extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 72 + MediaQuery.of(context).padding.bottom),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 178,
@@ -141,7 +136,7 @@ class _ListSliver extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 72 + MediaQuery.of(context).padding.bottom),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, i) => Padding(
@@ -172,58 +167,13 @@ class _Header extends StatelessWidget {
         : '$count карточек';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Картотека', style: text.displaySmall),
-                const SizedBox(height: 2),
-                Text(subtitle, style: text.bodySmall),
-              ],
-            ),
-          ),
-          _CircleButton(
-            icon: Icons.settings_outlined,
-            semanticLabel: 'Настройки',
-            onTap: () => context.push(AppRoute.settings),
-          ),
+          Text('Картотека', style: text.displaySmall),
+          const SizedBox(height: 2),
+          Text(subtitle, style: text.bodySmall),
         ],
-      ),
-    );
-  }
-}
-
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({
-    required this.icon,
-    required this.onTap,
-    this.semanticLabel,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final String? semanticLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: semanticLabel,
-      excludeSemantics: true,
-      onTap: onTap,
-      child: Material(
-        color: context.tokens.surface,
-        shape: const CircleBorder(),
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Padding(
-            padding: const EdgeInsets.all(9),
-            child: Icon(icon, size: 20, color: context.tokens.onMuted),
-          ),
-        ),
       ),
     );
   }

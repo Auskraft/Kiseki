@@ -22,7 +22,10 @@ import '../../../../core/theme/theme_cubit.dart';
 /// Экран 06 — настройки: оформление, доступ к тегам/корзине, бэкап (стаб),
 /// язык, о приложении. Хаб приложения (заменяет боттомшит выбора темы).
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.embedded = false});
+
+  /// В оболочке как вкладка-корень (embedded=true) — без кнопки «назад».
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +34,7 @@ class SettingsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _TopBar(),
+            _TopBar(embedded: embedded),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
@@ -60,6 +63,10 @@ class SettingsPage extends StatelessWidget {
 }
 
 class _TopBar extends StatelessWidget {
+  const _TopBar({this.embedded = false});
+
+  final bool embedded;
+
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
@@ -67,11 +74,14 @@ class _TopBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 6, 16, 10),
       child: Row(
         children: [
-          IconButton(
-            icon: Icon(Icons.arrow_back_rounded, color: tk.onBg),
-            tooltip: 'Назад',
-            onPressed: () => context.pop(),
-          ),
+          if (!embedded)
+            IconButton(
+              icon: Icon(Icons.arrow_back_rounded, color: tk.onBg),
+              tooltip: 'Назад',
+              onPressed: () => context.pop(),
+            )
+          else
+            const SizedBox(width: 8),
           Text('Настройки', style: Theme.of(context).textTheme.titleMedium),
         ],
       ),

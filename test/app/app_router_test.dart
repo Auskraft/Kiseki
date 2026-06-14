@@ -8,6 +8,7 @@ import 'package:kiseki/app/router/app_router.dart';
 import 'package:kiseki/core/catalog/tag_repository.dart';
 import 'package:kiseki/core/catalog/tag_repository_impl.dart';
 import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/core/nav/nav_style.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
 import 'package:kiseki/core/theme/kiseki_themes.dart';
 import 'package:kiseki/core/theme/theme_cubit.dart';
@@ -30,7 +31,8 @@ void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
+    // classic — без бесконечной анимации (капсула повесила бы pumpAndSettle).
+    SharedPreferences.setMockInitialValues({'nav_bar_style': 'classic'});
     db = AppDatabase(NativeDatabase.memory());
     final repo = MediaRepositoryImpl(db);
     getIt.registerSingleton<MediaRepository>(repo);
@@ -55,12 +57,15 @@ void main() {
     addTearDown(themeCubit.close);
     final listCubit = MediaListCubit(getIt<MediaRepository>());
     addTearDown(listCubit.close);
+    final navCubit = NavStyleCubit(prefs);
+    addTearDown(navCubit.close);
 
     await tester.pumpWidget(
       MultiBlocProvider(
         providers: [
           BlocProvider.value(value: themeCubit),
           BlocProvider.value(value: listCubit),
+          BlocProvider.value(value: navCubit),
         ],
         child: MaterialApp.router(
           theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
@@ -72,7 +77,8 @@ void main() {
 
     // MainScreen построен go_router'ом и достал MediaListCubit (провайдер выше
     // MaterialApp.router) → список отрисован.
-    expect(find.text('Картотека'), findsOneWidget);
+    // «Картотека» теперь и в шапке экрана, и подписью вкладки в нав-баре.
+    expect(find.text('Картотека'), findsWidgets);
     expect(find.text('Сквозь снег'), findsWidgets);
   });
 }
