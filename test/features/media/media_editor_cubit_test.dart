@@ -1,0 +1,175 @@
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:kiseki/core/catalog/tag_repository_impl.dart';
+import 'package:kiseki/core/catalog/unfinished_reason.dart';
+import 'package:kiseki/core/catalog/watch_status.dart';
+import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/features/media/data/media_repository_impl.dart';
+import 'package:kiseki/features/media/domain/media_draft.dart';
+import 'package:kiseki/features/media/domain/media_format.dart';
+import 'package:kiseki/features/media/domain/media_query.dart';
+import 'package:kiseki/features/media/domain/media_type.dart';
+import 'package:kiseki/features/media/presentation/cubit/media_editor_cubit.dart';
+
+void main() {
+  late AppDatabase db;
+  late MediaRepositoryImpl repo;
+  late TagRepositoryImpl tags;
+  final now = DateTime.utc(2026, 1, 1, 12);
+
+  setUp(() {
+    db = AppDatabase(NativeDatabase.memory());
+    repo = MediaRepositoryImpl(db, clock: () => now);
+    tags = TagRepositoryImpl(db, clock: () => now);
+  });
+  tearDown(() => db.close());
+
+  MediaEditorCubit create() => MediaEditorCubit(repo, tags);
+  MediaEditorCubit edit(String id) => MediaEditorCubit(repo, tags, entryId: id);
+
+  Future<dynamic> onlyEntry() async =>
+      (await repo.watch(const MediaListQuery()).first).single;
+
+  test('create: round-trips основные поля и поднимает justSaved', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+
+    cubit.setMediaType(MediaType.movie);
+    cubit.setTitle('Властелин колец');
+    cubit.setRating(95);
+    cubit.setYear(2001);
+    await cubit.save();
+
+    expect(cubit.state.justSaved, isTrue);
+    final e = await onlyEntry();
+    expect(e.title, 'Властелин колец');
+    expect(e.mediaType, MediaType.movie);
+    expect(e.format, MediaFormat.single);
+    expect(e.rating?.value, 95);
+    expect(e.year, 2001);
+  });
+
+  test('canSave требует непустое название', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+    expect(cubit.state.canSave, isFalse);
+    cubit.setTitle('  ');
+    expect(cubit.state.canSave, isFalse);
+    cubit.setTitle('Дюна');
+    expect(cubit.state.canSave, isTrue);
+  });
+
+  test('setMediaType сбрасывает format к дефолту типа', () {
+    final cubit = create();
+    addTearDown(cubit.close);
+    expect(cubit.state.format, MediaFormat.single); // movie по умолчанию
+    cubit.setMediaType(MediaType.series);
+    expect(cubit.state.format, MediaFormat.episodic);
+    cubit.setMediaType(MediaType.movie);
+    expect(cubit.state.format, MediaFormat.single);
+  });
+
+  test('серия без сезона нормализуется к S1 (CHECK)', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+    cubit.setMediaType(MediaType.series); // episodic
+    cubit.setTitle('Лост');
+    cubit.setCurrentEpisode(9);
+    await cubit.save();
+
+    final e = await onlyEntry();
+    expect(e.currentSeason, 1);
+    expect(e.currentEpisode, 9);
+  });
+
+  test('single зануляет сезонные поля при сохранении', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+    cubit.setMediaType(MediaType.series); // сначала сериал
+    cubit.setTitle('Аниме-фильм');
+    cubit.setCurrentSeason(2);
+    cubit.setCurrentEpisode(5);
+    cubit.setTotalEpisodes(12);
+    cubit.setMediaType(MediaType.movie); // переключили на фильм -> single
+    await cubit.save();
+
+    final e = await onlyEntry();
+    expect(e.format, MediaFormat.single);
+    expect(e.currentSeason, isNull);
+    expect(e.currentEpisode, isNull);
+    expect(e.totalEpisodes, isNull);
+  });
+
+  test('причина снимается вне паузы/заброса', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+    cubit.setTitle('Эйфория');
+    cubit.setStatus(WatchStatus.paused);
+    cubit.setUnfinishedReason(UnfinishedReason.noTime);
+    cubit.setStatus(WatchStatus.watching); // уходим со статуса паузы
+    expect(cubit.state.unfinishedReason, isNull);
+    await cubit.save();
+    expect((await onlyEntry()).unfinishedReason, isNull);
+  });
+
+  test('«жду серии» снимается при переходе на «заброшено»', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+    cubit.setMediaType(MediaType.series);
+    cubit.setTitle('Атака титанов');
+    cubit.setStatus(WatchStatus.paused);
+    cubit.setUnfinishedReason(UnfinishedReason.waitingEpisodes);
+    expect(cubit.state.canOfferWaiting, isTrue);
+    cubit.setStatus(WatchStatus.dropped);
+    expect(cubit.state.unfinishedReason, isNull);
+  });
+
+  test('dropped сохраняет валидную причину', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+    cubit.setTitle('Сериал');
+    cubit.setMediaType(MediaType.series);
+    cubit.setStatus(WatchStatus.dropped);
+    cubit.setUnfinishedReason(UnfinishedReason.notForMe);
+    await cubit.save();
+    expect((await onlyEntry()).unfinishedReason, UnfinishedReason.notForMe);
+  });
+
+  test('addTag создаёт тег, выбирает его и пишет в карточку', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+    cubit.setTitle('С тегом');
+    await cubit.addTag('Драма');
+    expect(cubit.state.selectedTagIds, hasLength(1));
+    await cubit.save();
+
+    final e = await onlyEntry();
+    expect(e.tags.map((t) => t.name), ['Драма']);
+  });
+
+  test('edit: подгружает запись и сохраняет избранное/пересмотры', () async {
+    final id = await repo.create(const MediaDraft(
+      title: 'Во все тяжкие',
+      mediaType: MediaType.series,
+      format: MediaFormat.episodic,
+      status: WatchStatus.completed,
+      isFavorite: true,
+      rewatchCount: 2,
+    ));
+
+    final cubit = edit(id);
+    addTearDown(cubit.close);
+    await cubit.stream.firstWhere((s) => !s.loading);
+
+    expect(cubit.state.title, 'Во все тяжкие');
+    expect(cubit.state.isFavorite, isTrue);
+
+    cubit.setTitle('Во все тяжкие (пересмотр)');
+    await cubit.save();
+
+    final e = await repo.findById(id);
+    expect(e!.title, 'Во все тяжкие (пересмотр)');
+    expect(e.isFavorite, isTrue, reason: 'избранное не должно сбрасываться');
+    expect(e.rewatchCount, 2, reason: 'пересмотры не должны сбрасываться');
+  });
+}

@@ -14,6 +14,7 @@ import '../../domain/media_repository.dart';
 import '../cubit/media_list_cubit.dart';
 import '../widgets/media_card.dart';
 import '../widgets/mini_poster.dart';
+import 'media_editor_page.dart';
 
 /// Главный экран — грид картотеки + полки «Жду серии» и «Смотрю сейчас».
 class MainScreen extends StatelessWidget {
@@ -33,7 +34,7 @@ class MainScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _snack(context, 'Форма создания карточки — следующий шаг'),
+        onPressed: () => _openEditor(context),
         icon: const Icon(Icons.add),
         label: const Text('Добавить'),
       ),
@@ -41,10 +42,8 @@ class MainScreen extends StatelessWidget {
   }
 }
 
-void _snack(BuildContext context, String msg) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(msg)));
+void _openEditor(BuildContext context, {String? entryId}) {
+  Navigator.of(context).push(MediaEditorPage.route(entryId: entryId));
 }
 
 class _HomeContent extends StatelessWidget {
@@ -100,7 +99,7 @@ class _HomeContent extends StatelessWidget {
             delegate: SliverChildBuilderDelegate(
               (context, i) => MediaCard(
                 entry: state.items[i],
-                onTap: () => _snack(context, 'Детальная карточка — следующий шаг'),
+                onTap: () => _openEditor(context, entryId: state.items[i].id),
               ),
               childCount: state.items.length,
             ),
@@ -263,7 +262,7 @@ class _Shelf extends StatelessWidget {
             itemBuilder: (context, i) => MiniPoster(
               entry: items[i],
               width: miniW,
-              onTap: () => _snack(context, 'Детальная карточка — следующий шаг'),
+              onTap: () => _openEditor(context, entryId: items[i].id),
             ),
           ),
         ),
@@ -309,7 +308,7 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             FilledButton.icon(
-              onPressed: () => _snack(context, 'Форма создания карточки — следующий шаг'),
+              onPressed: () => _openEditor(context),
               icon: const Icon(Icons.add),
               label: const Text('Добавить карточку'),
             ),
