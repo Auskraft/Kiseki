@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:app_links/app_links.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../error/failures.dart';
 
 /// Результат проверки авторизации: подключён / реально отключён (нет токена
 /// или 401/403) / связь не удалось проверить (токен есть, но сеть моргнула).
@@ -32,6 +35,27 @@ class YandexDiskService {
   static const _lastBackupKey = 'yandex_last_backup';
 
   static const _apiTimeout = Duration(seconds: 30);
+
+  /// Выполняет HTTP-запрос, мапя транспортные сбои (таймаут/нет сети) в
+  /// типизированный [NetworkFailure] — чтобы UI показал понятное действие.
+  Future<http.Response> _send(Future<http.Response> Function() call) async {
+    try {
+      return await call();
+    } on TimeoutException {
+      throw const NetworkFailure();
+    } on SocketException {
+      throw const NetworkFailure();
+    } on http.ClientException {
+      throw const NetworkFailure();
+    }
+  }
+
+  /// Мапит не-успешный HTTP-код в типизированный [Failure]: мёртвый токен →
+  /// переавторизация, прочее → сетевой сбой с кодом.
+  Never _failStatus(int code) {
+    if (code == 401 || code == 403) throw const AuthExpiredFailure();
+    throw NetworkFailure('Я.Диск вернул $code');
+  }
 
   // ─── OAuth (браузер → deep link) ─────────────────────────────
 
@@ -134,24 +158,23 @@ class YandexDiskService {
   /// Заливает архив в папку приложения (перезапись).
   Future<void> uploadBackup(Uint8List bytes) async {
     final token = _requireToken();
-    final linkResp = await http.get(
-      Uri.parse('https://cloud-api.yandex.net/v1/disk/resources/upload')
-          .replace(queryParameters: {'path': _backupPath, 'overwrite': 'true'}),
-      headers: {'Authorization': 'OAuth $token'},
-    ).timeout(_apiTimeout);
-    if (linkResp.statusCode != 200) {
-      throw Exception('Я.Диск вернул ${linkResp.statusCode}');
-    }
+    final linkResp = await _send(() => http.get(
+          Uri.parse('https://cloud-api.yandex.net/v1/disk/resources/upload')
+              .replace(
+                  queryParameters: {'path': _backupPath, 'overwrite': 'true'}),
+          headers: {'Authorization': 'OAuth $token'},
+        ).timeout(_apiTimeout));
+    if (linkResp.statusCode != 200) _failStatus(linkResp.statusCode);
     final href = (jsonDecode(linkResp.body) as Map<String, dynamic>)['href']
         as String?;
     if (href == null) throw Exception('Не удалось получить ссылку загрузки');
 
-    final putResp =
-        await http.put(Uri.parse(href), body: bytes).timeout(_apiTimeout);
+    final putResp = await _send(
+        () => http.put(Uri.parse(href), body: bytes).timeout(_apiTimeout));
     if (putResp.statusCode != 201 &&
         putResp.statusCode != 202 &&
         putResp.statusCode != 200) {
-      throw Exception('Загрузка не удалась (${putResp.statusCode})');
+      _failStatus(putResp.statusCode);
     }
     await _prefs.setString(_lastBackupKey, DateTime.now().toIso8601String());
   }
@@ -159,23 +182,20 @@ class YandexDiskService {
   /// Скачивает архив. `null` — копии ещё нет (404).
   Future<Uint8List?> downloadBackup() async {
     final token = _requireToken();
-    final linkResp = await http.get(
-      Uri.parse('https://cloud-api.yandex.net/v1/disk/resources/download')
-          .replace(queryParameters: {'path': _backupPath}),
-      headers: {'Authorization': 'OAuth $token'},
-    ).timeout(_apiTimeout);
+    final linkResp = await _send(() => http.get(
+          Uri.parse('https://cloud-api.yandex.net/v1/disk/resources/download')
+              .replace(queryParameters: {'path': _backupPath}),
+          headers: {'Authorization': 'OAuth $token'},
+        ).timeout(_apiTimeout));
     if (linkResp.statusCode == 404) return null;
-    if (linkResp.statusCode != 200) {
-      throw Exception('Я.Диск вернул ${linkResp.statusCode}');
-    }
+    if (linkResp.statusCode != 200) _failStatus(linkResp.statusCode);
     final href = (jsonDecode(linkResp.body) as Map<String, dynamic>)['href']
         as String?;
     if (href == null) throw Exception('Не удалось получить ссылку скачивания');
 
-    final fileResp = await http.get(Uri.parse(href)).timeout(_apiTimeout);
-    if (fileResp.statusCode != 200) {
-      throw Exception('Скачивание не удалось (${fileResp.statusCode})');
-    }
+    final fileResp =
+        await _send(() => http.get(Uri.parse(href)).timeout(_apiTimeout));
+    if (fileResp.statusCode != 200) _failStatus(fileResp.statusCode);
     return fileResp.bodyBytes;
   }
 

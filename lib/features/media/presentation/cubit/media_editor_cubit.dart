@@ -10,6 +10,7 @@ import '../../../../core/catalog/tag.dart';
 import '../../../../core/catalog/tag_repository.dart';
 import '../../../../core/catalog/unfinished_reason.dart';
 import '../../../../core/catalog/watch_status.dart';
+import '../../../../core/error/failures.dart';
 import '../../../../core/images/image_storage.dart';
 import '../../domain/media_draft.dart';
 import '../../domain/media_format.dart';
@@ -303,6 +304,10 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
       if (prev != null && prev != _loadedCoverId) {
         await _images.deleteFiles(prev);
       }
+    } on Failure catch (e) {
+      // Типизированная причина (слишком большой / не распознан) — в текст.
+      if (isClosed) return;
+      emit(state.copyWith(processingImage: false, errorMessage: () => e.message));
     } catch (_) {
       if (isClosed) return;
       emit(state.copyWith(
@@ -415,6 +420,9 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
       _loadedCoverId = state.coverImageId;
       if (isClosed) return;
       emit(state.copyWith(saving: false, justSaved: true));
+    } on Failure catch (e) {
+      if (isClosed) return;
+      emit(state.copyWith(saving: false, errorMessage: () => e.message));
     } catch (_) {
       if (isClosed) return;
       emit(state.copyWith(

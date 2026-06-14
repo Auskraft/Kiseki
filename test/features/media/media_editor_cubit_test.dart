@@ -7,6 +7,7 @@ import 'package:kiseki/core/catalog/tag_repository_impl.dart';
 import 'package:kiseki/core/catalog/unfinished_reason.dart';
 import 'package:kiseki/core/catalog/watch_status.dart';
 import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/core/error/failures.dart';
 import 'package:kiseki/core/images/image_processor.dart';
 import 'package:kiseki/core/images/image_storage.dart';
 import 'package:kiseki/core/images/media_paths.dart';
@@ -23,6 +24,13 @@ class _FakeProcessor implements ImageProcessor {
   @override
   Future<EncodedImage> process(String sourcePath) async =>
       EncodedImage(Uint8List.fromList([1, 2, 3]), Uint8List.fromList([4, 5, 6]));
+}
+
+/// Имитирует битый/нераспознанный файл — бросает типизированный сбой.
+class _ThrowingProcessor implements ImageProcessor {
+  @override
+  Future<EncodedImage> process(String sourcePath) async =>
+      throw const ImageDecodeFailure();
 }
 
 void main() {
@@ -94,6 +102,21 @@ void main() {
     await cubit.save();
     final e = await onlyEntry();
     expect(e.cover?.id, cubit.state.coverImageId);
+  });
+
+  test('attachCover показывает типизированную ошибку обработки', () async {
+    final failingImages = ImageStorage(MediaPaths(tmpRoot), _ThrowingProcessor());
+    final cubit = MediaEditorCubit(repo, tags, failingImages);
+    addTearDown(cubit.close);
+    cubit.setTitle('Битая картинка');
+
+    final src = File(p.join(tmpRoot.path, 'bad.jpg'))
+      ..writeAsBytesSync([0, 1, 2]);
+    await cubit.attachCover(src.path);
+
+    expect(cubit.state.coverImageId, isNull);
+    expect(cubit.state.processingImage, isFalse);
+    expect(cubit.state.errorMessage, 'Не удалось обработать изображение');
   });
 
   test('setMediaType сбрасывает format к дефолту типа', () {

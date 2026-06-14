@@ -118,6 +118,13 @@ class _EditorFormState extends State<_EditorForm> {
       file = await ImagePicker()
           .pickImage(source: source, maxWidth: 2048, maxHeight: 2048);
     } catch (_) {
+      // Пикер упал (нет доступа к камере/галерее) — раньше молчали; сообщаем.
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(
+              content: Text('Не удалось открыть камеру или галерею')));
+      }
       return;
     }
     if (file != null) await cubit.attachCover(file.path);

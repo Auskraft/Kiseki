@@ -7,8 +7,12 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
 import '../database/app_database.dart';
+import '../error/failures.dart';
 import '../images/media_paths.dart';
 import 'backup_manifest.dart';
+
+/// errno ENOSPC («no space left on device») — Linux/Android и Darwin/iOS.
+const int _enospc = 28;
 
 /// Ошибка формата/целостности архива (для понятного сообщения в UI).
 class BackupException implements Exception {
@@ -73,8 +77,8 @@ class BackupArchive {
   static const String remoteFileName = 'kiseki_backup.kiseki';
   static const int formatVersion = 1;
 
-  /// Упаковывает текущее состояние в архив (bytes). Картинки берутся как есть
-  /// (пока C2 не сделан — обычно их нет).
+  /// Упаковывает текущее состояние в архив (bytes): снимок БД + все файлы
+  /// картинок (`media/full|thumb`) + манифест.
   Future<Uint8List> pack() async {
     final tmp = await Directory.systemTemp.createTemp('kiseki_pack_');
     try {
@@ -118,6 +122,10 @@ class BackupArchive {
         throw const BackupException('Не удалось упаковать архив');
       }
       return Uint8List.fromList(zipped);
+    } on FileSystemException catch (e) {
+      // Кончилось место при VACUUM/записи снимка — понятное действие в UI.
+      if (e.osError?.errorCode == _enospc) throw const StorageFullFailure();
+      rethrow;
     } finally {
       await tmp.delete(recursive: true);
     }
@@ -173,6 +181,10 @@ class BackupArchive {
       return UnpackedBackup(manifest: manifest, dir: tmp);
     } on BackupException {
       rethrow;
+    } on FileSystemException catch (e) {
+      // Кончилось место при распаковке во временный каталог.
+      if (e.osError?.errorCode == _enospc) throw const StorageFullFailure();
+      throw const BackupException('Архив повреждён');
     } catch (_) {
       throw const BackupException('Архив повреждён');
     }

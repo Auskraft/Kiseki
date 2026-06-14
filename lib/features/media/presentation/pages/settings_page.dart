@@ -10,6 +10,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/backup/backup_archive.dart';
 import '../../../../core/backup/backup_cubit.dart';
 import '../../../../core/backup/yandex_disk_service.dart';
+import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/ui/confirm_sheet.dart';
 import '../../../../core/theme/kiseki_theme_id.dart';
@@ -170,8 +171,12 @@ class _BackupCard extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context).pop(); // закрыть прогресс
-      _snack(context,
-          e is BackupException ? e.message : 'Не удалось восстановить');
+      final msg = switch (e) {
+        BackupException b => b.message,
+        Failure f => f.message,
+        _ => 'Не удалось восстановить',
+      };
+      _snack(context, msg);
     }
   }
 

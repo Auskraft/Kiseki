@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../error/failures.dart';
 import 'backup_archive.dart';
 import 'yandex_disk_service.dart';
 
@@ -84,6 +85,8 @@ class BackupCubit extends Cubit<BackupState> {
       } else {
         emit(state.copyWith(busy: false));
       }
+    } on Failure catch (e) {
+      emit(state.copyWith(busy: false, error: e.message));
     } catch (_) {
       emit(state.copyWith(busy: false, error: 'Не удалось подключить Я.Диск'));
     }
@@ -105,6 +108,9 @@ class BackupCubit extends Cubit<BackupState> {
         lastBackup: _disk.lastBackupTime(),
         justBackedUp: true,
       ));
+    } on Failure catch (e) {
+      // Сеть / переавторизация / нет места — конкретное действие в тексте.
+      emit(state.copyWith(busy: false, error: e.message));
     } catch (_) {
       emit(state.copyWith(busy: false, error: 'Не удалось сделать бэкап'));
     }
