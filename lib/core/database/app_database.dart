@@ -1,0 +1,58 @@
+import 'package:drift/drift.dart';
+import 'package:drift_flutter/drift_flutter.dart';
+
+import '../../features/media/data/media_converters.dart';
+import '../../features/media/data/tables/media_items.dart';
+import '../../features/media/domain/media_format.dart';
+import '../../features/media/domain/media_type.dart';
+import '../catalog/catalog_domain.dart';
+import '../catalog/date_precision.dart';
+import '../catalog/unfinished_reason.dart';
+import '../catalog/watch_status.dart';
+import 'converters.dart';
+import 'fts.dart';
+import 'tables/catalog_items.dart';
+import 'tables/images.dart';
+import 'tables/item_tags.dart';
+import 'tables/tags.dart';
+
+part 'app_database.g.dart';
+
+/// Корневая БД приложения (Drift поверх SQLite).
+///
+/// Список таблиц в `@DriftDatabase` — единственная вынужденная точка касания
+/// ядра при добавлении домена (Drift статичен). FTS5 и триггеры создаются
+/// сырым SQL в `onCreate` (см. [fts.dart]).
+@DriftDatabase(tables: [CatalogItems, MediaItems, Images, Tags, ItemTags])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase(super.e);
+
+  /// Боевое подключение: файл `kiseki.sqlite` в каталоге приложения.
+  factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'kiseki'));
+
+  @override
+  int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {
+          await m.createAll();
+          for (final stmt in ftsAndTriggerStatements) {
+            await customStatement(stmt);
+          }
+          for (final stmt in extraIndexStatements) {
+            await customStatement(stmt);
+          }
+        },
+        beforeOpen: (details) async {
+          // В SQLite enforcement внешних ключей по умолчанию ВЫКЛЮЧЕН.
+          await customStatement('PRAGMA foreign_keys = ON;');
+        },
+      );
+
+  /// Полная пересборка FTS из базовых таблиц (после restore/миграции FTS).
+  Future<void> rebuildFts() async {
+    await customStatement(ftsRebuildClear);
+    await customStatement(ftsRebuildFill);
+  }
+}

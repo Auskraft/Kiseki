@@ -1,0 +1,9 @@
+# Конфигурация flutter gen-l10n (ADR-15).
+# Ключи в lib/l10n/*.arb; шаблон — русский. Переводы добавляются на бете
+# новыми app_<lang>.arb без правок кода. Вывод — в lib/l10n (не в синтетический
+# пакет), импорт: package:kiseki/l10n/app_localizations.dart.
+arb-dir: lib/l10n
+template-arb-file: app_ru.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

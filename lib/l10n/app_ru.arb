@@ -1,0 +1,23 @@
+{
+  "@@locale": "ru",
+  "appTitle": "Kiseki",
+  "@appTitle": {
+    "description": "Название приложения (в заголовке/таскбаре)."
+  },
+  "navLibrary": "Картотека",
+  "@navLibrary": {
+    "description": "Пункт навигации: главный список карточек."
+  },
+  "navTrash": "Корзина",
+  "@navTrash": {
+    "description": "Пункт навигации: корзина (мягко удалённые)."
+  },
+  "emptyCatalog": "Пока пусто. Добавьте первый фильм или сериал.",
+  "@emptyCatalog": {
+    "description": "Пустое состояние главного экрана."
+  },
+  "actionAdd": "Добавить",
+  "@actionAdd": {
+    "description": "Действие создания карточки (FAB)."
+  }
+}
