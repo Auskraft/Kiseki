@@ -31,6 +31,25 @@ Future<void> runRestore(BuildContext context) async {
   await restarter.reloadWith(() => _swap(unpacked));
 }
 
+/// Полный сброс при неустранимом повреждении БД (экран восстановления):
+/// удалить файл БД (+WAL/SHM) и картинки, пересобрать DI и перезапустить
+/// дерево — Drift откроет/создаст чистую БД (`onCreate`). Деструктивно.
+Future<void> runWipeAndRestart(BuildContext context) async {
+  final restarter = RestartWidget.of(context);
+  await restarter.reloadWith(() async {
+    final root = getIt<MediaPaths>().root;
+    await getIt<AppDatabase>().close();
+    for (final ext in const ['', '-wal', '-shm']) {
+      final f = File(p.join(root.path, '$kDbFileName$ext'));
+      if (f.existsSync()) await f.delete();
+    }
+    final media = Directory(p.join(root.path, 'media'));
+    if (media.existsSync()) await media.delete(recursive: true);
+    await getIt.reset();
+    await configureDependencies();
+  });
+}
+
 Future<void> _swap(UnpackedBackup unpacked) async {
   final root = getIt<MediaPaths>().root;
   final dbFile = File(p.join(root.path, kDbFileName));

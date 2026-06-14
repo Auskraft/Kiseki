@@ -56,6 +56,19 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(ftsRebuildFill);
   }
 
+  /// Лёгкая проверка целостности при старте (TECH_DESIGN §9). `PRAGMA
+  /// quick_check` возвращает 'ok' для здоровой БД; иначе (или при исключении
+  /// открытия/чтения) считаем БД повреждённой → экран восстановления.
+  Future<bool> checkIntegrity() async {
+    try {
+      final rows = await customSelect('PRAGMA quick_check').get();
+      if (rows.isEmpty) return false;
+      return rows.first.data.values.first == 'ok';
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Транзакционно-консистентный снимок БД в файл [path] (для бэкапа, §8.1).
   /// `VACUUM INTO` корректно учитывает WAL и не требует остановки записи.
   Future<void> snapshotInto(String path) async {

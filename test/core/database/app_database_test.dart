@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,7 @@ import 'package:kiseki/core/catalog/watch_status.dart';
 import 'package:kiseki/core/database/app_database.dart';
 import 'package:kiseki/features/media/domain/media_format.dart';
 import 'package:kiseki/features/media/domain/media_type.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   late AppDatabase db;
@@ -63,6 +66,25 @@ void main() {
           )),
       throwsA(isA<SqliteException>()),
     );
+  });
+
+  test('checkIntegrity: здоровая БД возвращает true', () async {
+    expect(await db.checkIntegrity(), isTrue);
+  });
+
+  test('checkIntegrity: битый файл БД возвращает false', () async {
+    final dir = Directory.systemTemp.createTempSync('kiseki_corrupt_');
+    addTearDown(() {
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    });
+    // Не SQLite-заголовок → quick_check/открытие падает → повреждение.
+    final f = File(p.join(dir.path, 'broken.sqlite'))
+      ..writeAsBytesSync(List.filled(2048, 0x42));
+    final broken = AppDatabase(NativeDatabase(f));
+    expect(await broken.checkIntegrity(), isFalse);
+    try {
+      await broken.close();
+    } catch (_) {/* битая БД может не закрыться чисто */}
   });
 
   test('CHECK: movie/single cannot carry season fields', () async {
