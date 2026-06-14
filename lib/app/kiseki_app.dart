@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/theme/app_dimens.dart';
 import '../core/theme/kiseki_themes.dart';
 import '../core/theme/theme_cubit.dart';
 import '../core/nav/menu_icons.dart';
@@ -50,7 +49,9 @@ class _KisekiAppState extends State<KisekiApp> {
             theme: buildKisekiTheme(themeState.themeId, Brightness.light),
             darkTheme: buildKisekiTheme(themeState.themeId, Brightness.dark),
             themeMode: themeState.themeMode,
-            themeAnimationDuration: AppDurations.themeMorph,
+            // Мгновенно: морф темы (AnimatedTheme) пересобирал тяжёлые экраны
+            // (пикер тем — 11 карточек с градиентами) каждый кадр ~0.5 с → лаги.
+            themeAnimationDuration: Duration.zero,
             routerConfig: _router,
           );
         },
