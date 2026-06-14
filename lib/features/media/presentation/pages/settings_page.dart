@@ -37,7 +37,7 @@ class SettingsPage extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 children: const [
-                  _SectionTitle('Резервная копия'),
+                  _SectionTitle('Резервное копирование'),
                   _BackupSection(),
                   SizedBox(height: 20),
                   _SectionTitle('Визуальный стиль'),
@@ -48,6 +48,9 @@ class SettingsPage extends StatelessWidget {
                   SizedBox(height: 20),
                   _SectionTitle('Прочее'),
                   _MiscCard(),
+                  SizedBox(height: 20),
+                  _SectionTitle('Документация'),
+                  _DocsCard(),
                 ],
               ),
             ),
@@ -461,6 +464,21 @@ class _MiscCard extends StatelessWidget {
             trailing: 'Kiseki · 1.0.0',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DocsCard extends StatelessWidget {
+  const _DocsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      child: _Row(
+        icon: Icons.privacy_tip_outlined,
+        title: 'Политика конфиденциальности',
+        onTap: () => context.push(AppRoute.privacy),
       ),
     );
   }

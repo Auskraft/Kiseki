@@ -6,6 +6,7 @@ import '../../core/nav/menu_icons_picker_page.dart';
 import '../../core/nav/nav_style_picker_page.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/theme_picker_page.dart';
+import '../../features/docs/privacy_policy_page.dart';
 import '../../features/media/presentation/pages/media_detail_page.dart';
 import '../../features/media/presentation/pages/media_editor_page.dart';
 import '../../features/media/presentation/pages/media_trash_page.dart';
@@ -24,6 +25,7 @@ abstract final class AppRoute {
   static const navStyle = '/settings/nav-style';
   static const menuIcons = '/settings/menu-icons';
   static const theme = '/settings/theme';
+  static const privacy = '/settings/privacy';
 
   /// Карточка по UUID (deep-link).
   static String detail(String id) => '/item/$id';
@@ -87,6 +89,10 @@ GoRouter createAppRouter() => GoRouter(
         GoRoute(
           path: AppRoute.theme,
           builder: (context, state) => const ThemePickerPage(),
+        ),
+        GoRoute(
+          path: AppRoute.privacy,
+          builder: (context, state) => const PrivacyPolicyPage(),
         ),
       ],
       errorBuilder: (context, state) => const _RouteNotFound(),
