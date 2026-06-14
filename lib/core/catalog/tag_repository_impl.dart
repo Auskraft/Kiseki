@@ -37,6 +37,32 @@ class TagRepositoryImpl implements TagRepository {
   }
 
   @override
+  Stream<List<TagWithCount>> watchAllWithCounts() {
+    // Считаем только живые карточки (не корзина).
+    return _db
+        .customSelect(
+          'SELECT t.id, t.name, t.color, ('
+          'SELECT COUNT(*) FROM item_tags it '
+          'JOIN catalog_items c ON c.id = it.item_id '
+          'WHERE it.tag_id = t.id AND c.deleted_at IS NULL'
+          ') AS cnt '
+          'FROM tags t ORDER BY t.name_normalized',
+          readsFrom: {_db.tags, _db.itemTags, _db.catalogItems},
+        )
+        .watch()
+        .map((rows) => rows
+            .map((r) => TagWithCount(
+                  Tag(
+                    id: r.read<String>('id'),
+                    name: r.read<String>('name'),
+                    color: r.readNullable<String>('color'),
+                  ),
+                  r.read<int>('cnt'),
+                ))
+            .toList());
+  }
+
+  @override
   Future<Tag> ensure(String name, {String? color}) async {
     final normalized = normalizeTagName(name);
     final existing = await (_db.select(_db.tags)
@@ -77,6 +103,24 @@ class TagRepositoryImpl implements TagRepository {
   Future<void> delete(String id) async {
     // CASCADE убирает связи item_tags.
     await (_db.delete(_db.tags)..where((t) => t.id.equals(id))).go();
+  }
+
+  @override
+  Future<void> merge(String sourceId, String targetId) async {
+    if (sourceId == targetId) return;
+    await _db.transaction(() async {
+      // Переносим связи на целевой тег; дубли (item уже с целевым) игнорируем.
+      await _db.customStatement(
+        'INSERT OR IGNORE INTO item_tags(item_id, tag_id) '
+        'SELECT item_id, ? FROM item_tags WHERE tag_id = ?',
+        [targetId, sourceId],
+      );
+      await _db.customStatement(
+        'DELETE FROM item_tags WHERE tag_id = ?',
+        [sourceId],
+      );
+      await (_db.delete(_db.tags)..where((t) => t.id.equals(sourceId))).go();
+    });
   }
 
   Tag _toTag(TagRow row) => Tag(id: row.id, name: row.name, color: row.color);

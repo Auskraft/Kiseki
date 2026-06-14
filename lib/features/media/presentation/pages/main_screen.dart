@@ -17,6 +17,7 @@ import '../widgets/mini_poster.dart';
 import 'media_detail_page.dart';
 import 'media_editor_page.dart';
 import 'media_trash_page.dart';
+import 'tags_page.dart';
 
 /// Главный экран — грид картотеки + полки «Жду серии» и «Смотрю сейчас».
 class MainScreen extends StatelessWidget {
@@ -142,6 +143,11 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
+          _CircleButton(
+            icon: Icons.label_outline_rounded,
+            onTap: () => Navigator.of(context).push(TagsPage.route()),
+          ),
+          const SizedBox(width: 8),
           _CircleButton(
             icon: Icons.delete_outline_rounded,
             onTap: () => Navigator.of(context).push(MediaTrashPage.route()),

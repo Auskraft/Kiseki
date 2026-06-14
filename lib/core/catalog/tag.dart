@@ -13,3 +13,14 @@ class Tag extends Equatable {
   @override
   List<Object?> get props => [id, name, color];
 }
+
+/// Тег + число живых карточек с ним (для экрана управления тегами).
+class TagWithCount extends Equatable {
+  const TagWithCount(this.tag, this.count);
+
+  final Tag tag;
+  final int count;
+
+  @override
+  List<Object?> get props => [tag, count];
+}

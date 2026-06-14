@@ -11,6 +11,7 @@ import '../../../../core/catalog/watch_status.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/catalog_date_format.dart';
+import '../../../../core/ui/hex_color.dart';
 import '../../../../core/ui/score_badge.dart';
 import '../../../../core/ui/status_visuals.dart';
 import '../../domain/media_entry.dart';
@@ -685,7 +686,7 @@ class _TagsWrap extends StatelessWidget {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: _parseHex(tag.color) ?? tk.secondary,
+                    color: parseHexColor(tag.color) ?? tk.secondary,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -701,14 +702,6 @@ class _TagsWrap extends StatelessWidget {
       ],
     );
   }
-}
-
-Color? _parseHex(String? hex) {
-  if (hex == null) return null;
-  var h = hex.replaceFirst('#', '').trim();
-  if (h.length == 6) h = 'FF$h';
-  final v = int.tryParse(h, radix: 16);
-  return v == null ? null : Color(v);
 }
 
 // ─────────────────────────── отзыв ───────────────────────────────────────
