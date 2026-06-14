@@ -45,6 +45,25 @@ hooks:
 iOS (`libsqlite3.arm64.ios.dylib`, `libsqlite3.*.ios_sim.dylib`) **не вендорены** —
 добавить при первой сборке на macOS, иначе хук упадёт «file not found».
 
+## Android: jniLibs (ВАЖНО)
+
+`source: test-sqlite3` отдаёт бинарь для `flutter test` на хосте, но в **APK не
+пакуется** (этот режим хука — для хост-тестов, не для app-сборки). Без бандла на
+устройстве `dlopen('libsqlite3.so')` падает («library "libsqlite3.so" not
+found») и приложение застревает на экране восстановления БД. Поэтому android-`.so`
+дополнительно лежат в `android/app/src/main/jniLibs/<abi>/libsqlite3.so` (штатный
+android-бандл нативной либы — гарантированно попадает в APK). Маппинг:
+
+| third_party | → jniLibs |
+|---|---|
+| `libsqlite3.arm64.android.so` | `arm64-v8a/libsqlite3.so` |
+| `libsqlite3.arm.android.so`   | `armeabi-v7a/libsqlite3.so` |
+| `libsqlite3.x64.android.so`   | `x86_64/libsqlite3.so` |
+
+`android/app/build.gradle.kts` содержит `packaging.jniLibs.pickFirsts += "**/libsqlite3.so"`
+на случай дубля. **Файлы android-`.so` в этой папке удалять нельзя** — их читает
+хук при android-сборке; при обновлении версии перекопируй их и в `jniLibs/`.
+
 ## Обновление (при апгрейде версии sqlite3)
 
 Хеши и имя тега пиннятся к версии пакета. После `flutter pub upgrade`, меняющего
