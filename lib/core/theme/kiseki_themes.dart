@@ -247,7 +247,7 @@ TextTheme _textTheme(KisekiTokens t) {
     displaySmall: heading(22, height: 1.12), // заголовки экранов (Картотека)
     headlineSmall: heading(18, height: 1.15),
     titleLarge: heading(19, height: 1.15), // название медиа в детали
-    titleMedium: onest(14.5, w: FontWeight.w600),
+    titleMedium: heading(14.5, height: 1.2), // заголовки разделов (полки, «Все карточки»)
     titleSmall: onest(13, w: FontWeight.w600),
     bodyLarge: onest(15, height: 1.45),
     bodyMedium: onest(13.5, height: 1.5, color: muted),
