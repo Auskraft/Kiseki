@@ -48,6 +48,7 @@ dependencies:
   collection: ^1.19.1
   intl: ^0.20.2
   flutter_image_compress: ^2.4.0
+  image_picker: ^1.1.2
   google_fonts: ^8.1.0
   shared_preferences: ^2.5.5
   # Бэкап на Яндекс.Диск (Этап F): OAuth deep-link + REST + .kiseki-архив.

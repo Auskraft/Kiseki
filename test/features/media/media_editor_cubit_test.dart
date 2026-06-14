@@ -1,31 +1,53 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kiseki/core/catalog/tag_repository_impl.dart';
 import 'package:kiseki/core/catalog/unfinished_reason.dart';
 import 'package:kiseki/core/catalog/watch_status.dart';
 import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/core/images/image_processor.dart';
+import 'package:kiseki/core/images/image_storage.dart';
+import 'package:kiseki/core/images/media_paths.dart';
 import 'package:kiseki/features/media/data/media_repository_impl.dart';
 import 'package:kiseki/features/media/domain/media_draft.dart';
 import 'package:kiseki/features/media/domain/media_format.dart';
 import 'package:kiseki/features/media/domain/media_query.dart';
 import 'package:kiseki/features/media/domain/media_type.dart';
 import 'package:kiseki/features/media/presentation/cubit/media_editor_cubit.dart';
+import 'package:path/path.dart' as p;
+
+/// Без нативного кодека: отдаёт фиктивные WebP-байты.
+class _FakeProcessor implements ImageProcessor {
+  @override
+  Future<EncodedImage> process(String sourcePath) async =>
+      EncodedImage(Uint8List.fromList([1, 2, 3]), Uint8List.fromList([4, 5, 6]));
+}
 
 void main() {
   late AppDatabase db;
   late MediaRepositoryImpl repo;
   late TagRepositoryImpl tags;
+  late ImageStorage images;
+  late Directory tmpRoot;
   final now = DateTime.utc(2026, 1, 1, 12);
 
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
     repo = MediaRepositoryImpl(db, clock: () => now);
     tags = TagRepositoryImpl(db, clock: () => now);
+    tmpRoot = Directory.systemTemp.createTempSync('kiseki_editor_test_');
+    images = ImageStorage(MediaPaths(tmpRoot), _FakeProcessor());
   });
-  tearDown(() => db.close());
+  tearDown(() async {
+    await db.close();
+    if (tmpRoot.existsSync()) tmpRoot.deleteSync(recursive: true);
+  });
 
-  MediaEditorCubit create() => MediaEditorCubit(repo, tags);
-  MediaEditorCubit edit(String id) => MediaEditorCubit(repo, tags, entryId: id);
+  MediaEditorCubit create() => MediaEditorCubit(repo, tags, images);
+  MediaEditorCubit edit(String id) =>
+      MediaEditorCubit(repo, tags, images, entryId: id);
 
   Future<dynamic> onlyEntry() async =>
       (await repo.watch(const MediaListQuery()).first).single;
@@ -57,6 +79,21 @@ void main() {
     expect(cubit.state.canSave, isFalse);
     cubit.setTitle('Дюна');
     expect(cubit.state.canSave, isTrue);
+  });
+
+  test('attachCover сохраняет обложку и пишет её в карточку', () async {
+    final cubit = create();
+    addTearDown(cubit.close);
+    cubit.setTitle('С обложкой');
+
+    final src = File(p.join(tmpRoot.path, 'src.jpg'))
+      ..writeAsBytesSync([0, 1, 2, 3, 4]);
+    await cubit.attachCover(src.path);
+    expect(cubit.state.coverImageId, isNotNull);
+
+    await cubit.save();
+    final e = await onlyEntry();
+    expect(e.cover?.id, cubit.state.coverImageId);
   });
 
   test('setMediaType сбрасывает format к дефолту типа', () {

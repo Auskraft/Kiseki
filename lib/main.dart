@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/di/injector.dart';
 import 'core/catalog/tag_repository.dart';
+import 'core/images/image_storage.dart';
 import 'core/theme/app_dimens.dart';
 import 'core/ui/restart_widget.dart';
 import 'core/theme/kiseki_themes.dart';
@@ -28,6 +31,14 @@ Future<void> main() async {
       await seedDemoData(repo, getIt<TagRepository>());
     }
   }
+
+  // Чистка файлов-сирот картинок (нет ссылки в БД) — фоном, не блокирует старт.
+  unawaited(() async {
+    try {
+      await getIt<ImageStorage>()
+          .sweepOrphans(await getIt<MediaRepository>().allImageIds());
+    } catch (_) {/* не критично */}
+  }());
 
   runApp(const RestartWidget(child: KisekiApp()));
 }

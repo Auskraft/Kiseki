@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../app/di/injector.dart';
 import '../../../../core/catalog/tag_repository.dart';
 import '../../../../core/catalog/unfinished_reason.dart';
 import '../../../../core/catalog/watch_status.dart';
+import '../../../../core/images/image_storage.dart';
+import '../../../../core/images/media_paths.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/status_visuals.dart';
@@ -37,6 +40,7 @@ class MediaEditorPage extends StatelessWidget {
       create: (_) => MediaEditorCubit(
         getIt<MediaRepository>(),
         getIt<TagRepository>(),
+        getIt<ImageStorage>(),
         entryId: entryId,
       ),
       child: BlocBuilder<MediaEditorCubit, MediaEditorState>(
@@ -106,6 +110,52 @@ class _EditorFormState extends State<_EditorForm> {
       if (discard != true) return;
     }
     if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _pickCover(BuildContext context) async {
+    final cubit = context.read<MediaEditorCubit>();
+    final source = await _chooseImageSource(context);
+    if (source == null) return;
+    XFile? file;
+    try {
+      file = await ImagePicker()
+          .pickImage(source: source, maxWidth: 2048, maxHeight: 2048);
+    } catch (_) {
+      return;
+    }
+    if (file != null) await cubit.attachCover(file.path);
+  }
+
+  Future<ImageSource?> _chooseImageSource(BuildContext context) {
+    final tk = context.tokens;
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: tk.surface2,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
+        ),
+        padding: EdgeInsets.only(
+            top: 8, bottom: MediaQuery.paddingOf(context).bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.photo_library_outlined, color: tk.onMuted),
+              title: const Text('Галерея'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_camera_outlined, color: tk.onMuted),
+              title: const Text('Камера'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -291,6 +341,14 @@ class _EditorFormState extends State<_EditorForm> {
           ],
         ),
         const SizedBox(height: 11),
+        const EditorLabel('Обложка'),
+        _CoverField(
+          coverImageId: state.coverImageId,
+          processing: state.processingImage,
+          onPick: () => _pickCover(context),
+          onRemove: cubit.removeCover,
+        ),
+        const SizedBox(height: 11),
         RatingInput(value: state.rating, onChanged: cubit.setRating),
         const SizedBox(height: 14),
         const EditorLabel('Теги'),
@@ -376,6 +434,128 @@ class _GroupGap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const SizedBox(height: 18);
+}
+
+// ─────────────────────────── обложка ─────────────────────────────────────
+
+class _CoverField extends StatelessWidget {
+  const _CoverField({
+    required this.coverImageId,
+    required this.processing,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  final String? coverImageId;
+  final bool processing;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    final text = Theme.of(context).textTheme;
+    final hasCover = coverImageId != null;
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: processing ? null : onPick,
+          child: Container(
+            width: 84,
+            height: 118,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: tk.surface,
+              borderRadius: BorderRadius.circular(AppRadii.sm),
+              border: Border.all(color: tk.outlineSoft),
+            ),
+            child: processing
+                ? const Center(
+                    child: SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2)))
+                : hasCover
+                    ? Image.file(
+                        getIt<MediaPaths>().absFull(coverImageId!),
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, _, _) => Icon(
+                            Icons.broken_image_outlined, color: tk.onFaint),
+                      )
+                    : Icon(Icons.add_photo_alternate_outlined,
+                        size: 28, color: tk.onFaint),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: hasCover
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _CoverAction(
+                        icon: Icons.swap_horiz_rounded,
+                        label: 'Заменить',
+                        onTap: onPick),
+                    _CoverAction(
+                        icon: Icons.delete_outline_rounded,
+                        label: 'Убрать',
+                        color: tk.error,
+                        onTap: onRemove),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Добавить обложку', style: text.titleSmall),
+                    const SizedBox(height: 3),
+                    Text('Из галереи или камеры', style: text.bodySmall),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CoverAction extends StatelessWidget {
+  const _CoverAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? context.tokens.onMuted;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadii.xs),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 17, color: c),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 13 * uiScale,
+                    fontWeight: FontWeight.w600,
+                    color: c)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────── верхний бар ─────────────────────────────────

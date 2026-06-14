@@ -10,6 +10,7 @@ import '../../../../core/catalog/tag.dart';
 import '../../../../core/catalog/tag_repository.dart';
 import '../../../../core/catalog/unfinished_reason.dart';
 import '../../../../core/catalog/watch_status.dart';
+import '../../../../core/images/image_storage.dart';
 import '../../domain/media_draft.dart';
 import '../../domain/media_format.dart';
 import '../../domain/media_repository.dart';
@@ -48,6 +49,8 @@ class MediaEditorState extends Equatable {
     this.rewatchCount = 0,
     this.selectedTagIds = const {},
     this.allTags = const [],
+    this.coverImageId,
+    this.processingImage = false,
     this.loading = false,
     this.saving = false,
     this.justSaved = false,
@@ -87,6 +90,12 @@ class MediaEditorState extends Equatable {
 
   final Set<String> selectedTagIds;
   final List<Tag> allTags;
+
+  /// UUID обложки (файлы уже сохранены) или `null`.
+  final String? coverImageId;
+
+  /// Идёт сжатие/сохранение выбранной картинки.
+  final bool processingImage;
 
   final bool loading;
   final bool saving;
@@ -136,6 +145,8 @@ class MediaEditorState extends Equatable {
     int? rewatchCount,
     Set<String>? selectedTagIds,
     List<Tag>? allTags,
+    ValueGetter<String?>? coverImageId,
+    bool? processingImage,
     bool? loading,
     bool? saving,
     bool? justSaved,
@@ -172,6 +183,9 @@ class MediaEditorState extends Equatable {
       rewatchCount: rewatchCount ?? this.rewatchCount,
       selectedTagIds: selectedTagIds ?? this.selectedTagIds,
       allTags: allTags ?? this.allTags,
+      coverImageId:
+          coverImageId != null ? coverImageId() : this.coverImageId,
+      processingImage: processingImage ?? this.processingImage,
       loading: loading ?? this.loading,
       saving: saving ?? this.saving,
       justSaved: justSaved ?? this.justSaved,
@@ -204,6 +218,8 @@ class MediaEditorState extends Equatable {
         rewatchCount,
         selectedTagIds,
         allTags,
+        coverImageId,
+        processingImage,
         loading,
         saving,
         justSaved,
@@ -215,7 +231,7 @@ class MediaEditorState extends Equatable {
 /// `episodic`, причина — при `paused`/`dropped`) и собирает [MediaDraft]
 /// для репозитория. В edit-режиме подгружает существующую запись.
 class MediaEditorCubit extends Cubit<MediaEditorState> {
-  MediaEditorCubit(this._repo, this._tags, {String? entryId})
+  MediaEditorCubit(this._repo, this._tags, this._images, {String? entryId})
       : super(MediaEditorState(
           mode: entryId == null ? EditorMode.create : EditorMode.edit,
           entryId: entryId,
@@ -229,7 +245,11 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
 
   final MediaRepository _repo;
   final TagRepository _tags;
+  final ImageStorage _images;
   late final StreamSubscription<List<Tag>> _tagsSub;
+
+  /// Обложка, лежащая в БД на момент загрузки (для очистки файлов при замене).
+  String? _loadedCoverId;
 
   Future<void> _load(String id) async {
     final e = await _repo.findById(id);
@@ -262,8 +282,42 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
       rewatchCount: e.rewatchCount,
       selectedTagIds: e.tags.map((t) => t.id).toSet(),
       allTags: state.allTags,
+      coverImageId: e.cover?.id,
       loading: false,
     ));
+    _loadedCoverId = e.cover?.id;
+  }
+
+  /// Сжимает и сохраняет выбранную картинку (файлы на диск, §7.3) и делает её
+  /// обложкой. Прежнюю СТАГНУТУЮ (не из БД) обложку удаляет — она осиротела.
+  Future<void> attachCover(String sourcePath) async {
+    emit(state.copyWith(processingImage: true, errorMessage: () => null));
+    try {
+      final newId = await _images.save(sourcePath);
+      if (isClosed) return;
+      final prev = state.coverImageId;
+      emit(state.copyWith(
+        coverImageId: () => newId,
+        processingImage: false,
+      ));
+      if (prev != null && prev != _loadedCoverId) {
+        await _images.deleteFiles(prev);
+      }
+    } catch (_) {
+      if (isClosed) return;
+      emit(state.copyWith(
+        processingImage: false,
+        errorMessage: () => 'Не удалось обработать картинку',
+      ));
+    }
+  }
+
+  Future<void> removeCover() async {
+    final prev = state.coverImageId;
+    emit(state.copyWith(coverImageId: () => null));
+    if (prev != null && prev != _loadedCoverId) {
+      await _images.deleteFiles(prev);
+    }
   }
 
   void setTitle(String v) => emit(state.copyWith(title: v));
@@ -353,6 +407,12 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
       } else {
         await _repo.create(draft);
       }
+      // Старая обложка из БД заменена/убрана → чистим её файлы (после коммита).
+      final old = _loadedCoverId;
+      if (old != null && old != state.coverImageId) {
+        await _images.deleteFiles(old);
+      }
+      _loadedCoverId = state.coverImageId;
       if (isClosed) return;
       emit(state.copyWith(saving: false, justSaved: true));
     } catch (_) {
@@ -407,6 +467,7 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
       lastActivityAt: state.lastActivityAt,
       finishedAt: state.finishedAt,
       tagIds: state.selectedTagIds.toList(),
+      coverImageId: state.coverImageId,
     );
   }
 
@@ -418,6 +479,11 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
   @override
   Future<void> close() async {
     await _tagsSub.cancel();
+    // Отмена формы: стагнутая (не сохранённая) обложка осиротела — удаляем.
+    final staged = state.coverImageId;
+    if (!state.justSaved && staged != null && staged != _loadedCoverId) {
+      await _images.deleteFiles(staged);
+    }
     return super.close();
   }
 }

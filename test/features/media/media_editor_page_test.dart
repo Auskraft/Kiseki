@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,9 @@ import 'package:kiseki/app/di/injector.dart';
 import 'package:kiseki/core/catalog/tag_repository.dart';
 import 'package:kiseki/core/catalog/tag_repository_impl.dart';
 import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/core/images/image_processor.dart';
+import 'package:kiseki/core/images/image_storage.dart';
+import 'package:kiseki/core/images/media_paths.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
 import 'package:kiseki/core/theme/kiseki_themes.dart';
 import 'package:kiseki/features/media/data/media_repository_impl.dart';
@@ -16,17 +21,22 @@ import 'package:kiseki/features/media/presentation/pages/media_editor_page.dart'
 
 void main() {
   late AppDatabase db;
+  late Directory tmpRoot;
 
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
+    tmpRoot = Directory.systemTemp.createTempSync('kiseki_editor_pg_');
     getIt.registerSingleton<MediaRepository>(MediaRepositoryImpl(db));
     getIt.registerSingleton<TagRepository>(TagRepositoryImpl(db));
+    getIt.registerSingleton<ImageStorage>(
+        ImageStorage(MediaPaths(tmpRoot), const FlutterImageProcessor()));
   });
   tearDown(() async {
     await getIt.reset();
     await db.close();
+    if (tmpRoot.existsSync()) tmpRoot.deleteSync(recursive: true);
   });
 
   testWidgets('форма создаёт карточку и возвращается назад', (tester) async {
