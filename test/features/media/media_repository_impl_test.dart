@@ -214,6 +214,24 @@ void main() {
     await repo.purge(id);
     expect(await repo.watchById(id).first, isNull);
   });
+
+  test('purgeAllTrashed чистит только корзину, живые целы', () async {
+    final live = await repo.create(seriesDraft(title: 'Live'));
+    final a = await repo.create(seriesDraft(title: 'A'));
+    final b = await repo.create(seriesDraft(title: 'B'));
+    await repo.softDelete(a);
+    await repo.softDelete(b);
+
+    await repo.purgeAllTrashed();
+
+    expect(await repo.findById(a), isNull);
+    expect(await repo.findById(b), isNull);
+    expect((await repo.findById(live))!.title, 'Live');
+    expect(
+      await repo.watch(const MediaListQuery(includeDeleted: true)).first,
+      isEmpty,
+    );
+  });
 }
 
 extension on MediaDraft {

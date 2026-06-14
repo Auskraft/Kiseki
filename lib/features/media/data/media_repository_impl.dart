@@ -188,6 +188,16 @@ class MediaRepositoryImpl implements MediaRepository {
     await (_db.delete(_db.catalogItems)..where((t) => t.id.equals(id))).go();
   }
 
+  @override
+  Future<void> purgeAllTrashed() async {
+    await _db.customUpdate(
+      'DELETE FROM catalog_items WHERE domain = ? AND deleted_at IS NOT NULL',
+      variables: [Variable<String>(CatalogDomain.media.code)],
+      updates: {_db.catalogItems},
+      updateKind: UpdateKind.delete,
+    );
+  }
+
   // ─────────────────────────── companions ───────────────────────────
 
   CatalogItemsCompanion _coreInsert(String id, MediaDraft d, DateTime now) {
