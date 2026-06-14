@@ -1,3 +1,5 @@
+import '../../../core/catalog/unfinished_reason.dart';
+import '../../../core/catalog/watch_status.dart';
 import 'media_draft.dart';
 import 'media_entry.dart';
 import 'media_query.dart';
@@ -8,6 +10,10 @@ abstract interface class MediaRepository {
   /// Реактивный список по фильтру (пере-эмитит при изменении данных).
   Stream<List<MediaEntry>> watch(MediaListQuery query);
 
+  /// Реактивная одиночная карточка (для детали): пере-эмитит при изменении,
+  /// `null` если запись отсутствует (включая физически удалённую).
+  Stream<MediaEntry?> watchById(String id);
+
   Future<MediaEntry?> findById(String id);
 
   /// Создаёт карточку (генерит UUID, ставит created_at/updated_at).
@@ -16,6 +22,18 @@ abstract interface class MediaRepository {
 
   /// Обновляет карточку и двигает updated_at (инвариант LWW).
   Future<void> update(String id, MediaDraft draft);
+
+  /// Быстрая смена статуса (+ причина при `paused`/`dropped`). Двигает
+  /// updated_at. Причина снимается вне паузы/заброса; «жду серии» — только
+  /// при `paused` (ADR-08).
+  Future<void> setStatus(String id, WatchStatus status,
+      {UnfinishedReason? unfinishedReason});
+
+  /// Переключение избранного. Двигает updated_at.
+  Future<void> setFavorite(String id, bool isFavorite);
+
+  /// +1 к счётчику пересмотров (`event_count`). Двигает updated_at.
+  Future<void> incrementEventCount(String id);
 
   /// Мягкое удаление (в корзину): ставит deleted_at.
   Future<void> softDelete(String id);

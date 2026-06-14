@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../catalog/unfinished_reason.dart';
 import '../catalog/watch_status.dart';
 import '../theme/app_dimens.dart';
 import '../theme/theme_context.dart';
+
+/// Подпись причины «не досмотрел» (общая для редактора и детали).
+String reasonLabel(UnfinishedReason reason) => switch (reason) {
+      UnfinishedReason.waitingEpisodes => 'Жду серии',
+      UnfinishedReason.lostQuality => 'Скатился',
+      UnfinishedReason.notForMe => 'Не зашло',
+      UnfinishedReason.noTime => 'Нет времени',
+      UnfinishedReason.other => 'Другое',
+    };
 
 /// Иконка и подпись статуса (смысл передаётся не только цветом, a11y).
 /// Особый случай — «жду серии»: песочные часы, подпись «Жду серии»

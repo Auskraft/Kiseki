@@ -549,14 +549,6 @@ class _ReasonBlock extends StatelessWidget {
   final MediaEditorState state;
   final MediaEditorCubit cubit;
 
-  static const _labels = <UnfinishedReason, String>{
-    UnfinishedReason.waitingEpisodes: 'Жду серии',
-    UnfinishedReason.lostQuality: 'Скатился',
-    UnfinishedReason.notForMe: 'Не зашло',
-    UnfinishedReason.noTime: 'Нет времени',
-    UnfinishedReason.other: 'Другое',
-  };
-
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
@@ -572,19 +564,19 @@ class _ReasonBlock extends StatelessWidget {
             spacing: 7,
             runSpacing: 7,
             children: [
-              for (final entry in _labels.entries)
+              for (final reason in UnfinishedReason.values)
                 // «Жду серии» — только при паузе + episodic (ADR-08).
-                if (entry.key != UnfinishedReason.waitingEpisodes ||
+                if (reason != UnfinishedReason.waitingEpisodes ||
                     state.canOfferWaiting)
                   EditorChip(
-                    label: entry.value,
+                    label: reasonLabel(reason),
                     accent: paused,
-                    icon: entry.key == UnfinishedReason.waitingEpisodes
+                    icon: reason == UnfinishedReason.waitingEpisodes
                         ? Icons.hourglass_bottom_rounded
                         : null,
-                    selected: state.unfinishedReason == entry.key,
+                    selected: state.unfinishedReason == reason,
                     onTap: () => cubit.setUnfinishedReason(
-                      state.unfinishedReason == entry.key ? null : entry.key,
+                      state.unfinishedReason == reason ? null : reason,
                     ),
                   ),
             ],

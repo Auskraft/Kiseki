@@ -161,6 +161,59 @@ void main() {
     // Сам тег остаётся в справочнике.
     expect(await tags.all(), hasLength(1));
   });
+
+  test('watchById реактивно пере-эмитит при мутации', () async {
+    final id = await repo.create(seriesDraft(status: WatchStatus.plan));
+    final emissions = <WatchStatus?>[];
+    final sub = repo.watchById(id).listen((e) => emissions.add(e?.status));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await repo.setStatus(id, WatchStatus.watching);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await sub.cancel();
+    expect(emissions, [WatchStatus.plan, WatchStatus.watching]);
+  });
+
+  test('setStatus снимает причину вне паузы/заброса', () async {
+    final id = await repo.create(seriesDraft(status: WatchStatus.paused));
+    await repo.setStatus(id, WatchStatus.paused,
+        unfinishedReason: UnfinishedReason.noTime);
+    expect((await repo.findById(id))!.unfinishedReason, UnfinishedReason.noTime);
+
+    await repo.setStatus(id, WatchStatus.watching);
+    expect((await repo.findById(id))!.unfinishedReason, isNull);
+  });
+
+  test('setStatus: «жду серии» допустимо только при паузе', () async {
+    final id = await repo.create(seriesDraft());
+    await repo.setStatus(id, WatchStatus.dropped,
+        unfinishedReason: UnfinishedReason.waitingEpisodes);
+    final e = await repo.findById(id);
+    expect(e!.status, WatchStatus.dropped);
+    expect(e.unfinishedReason, isNull);
+  });
+
+  test('setFavorite и incrementEventCount двигают updated_at', () async {
+    final id = await repo.create(seriesDraft());
+
+    now = DateTime.utc(2026, 5, 5);
+    await repo.setFavorite(id, true);
+    var e = await repo.findById(id);
+    expect(e!.isFavorite, isTrue);
+    expect(e.updatedAt, DateTime.utc(2026, 5, 5));
+
+    now = DateTime.utc(2026, 6, 6);
+    await repo.incrementEventCount(id);
+    e = await repo.findById(id);
+    expect(e!.rewatchCount, 1);
+    expect(e.updatedAt, DateTime.utc(2026, 6, 6));
+  });
+
+  test('watchById отдаёт null после физического удаления', () async {
+    final id = await repo.create(seriesDraft());
+    expect(await repo.watchById(id).first, isNotNull);
+    await repo.purge(id);
+    expect(await repo.watchById(id).first, isNull);
+  });
 }
 
 extension on MediaDraft {

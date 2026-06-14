@@ -4,6 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_dimens.dart';
 import '../theme/theme_context.dart';
 
+/// Подпись диапазона оценки (для детали: «Отличная»). Дублирует смысл цвета.
+String scoreLabel(int value) {
+  if (value < 40) return 'Слабая';
+  if (value < 60) return 'Средняя';
+  if (value < 75) return 'Хорошая';
+  if (value < 90) return 'Отличная';
+  return 'Шедевр';
+}
+
 /// Бейдж оценки 0–100. Цвет по диапазону, число всегда текстом (a11y).
 /// `null` = «не оценено» -> «—» (не «0»).
 class ScoreBadge extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kiseki/core/catalog/catalog_date.dart';
 import 'package:kiseki/core/catalog/date_precision.dart';
-import 'package:kiseki/features/media/presentation/widgets/editor/catalog_date_field.dart';
+import 'package:kiseki/core/ui/catalog_date_format.dart';
 
 void main() {
   test('formatCatalogDate форматирует по точности', () {

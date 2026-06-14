@@ -62,6 +62,27 @@ class MediaRepositoryImpl implements MediaRepository {
   }
 
   @override
+  Stream<MediaEntry?> watchById(String id) {
+    return _db
+        .customSelect(
+          '$_select WHERE c.id = ?',
+          variables: [Variable<String>(id)],
+          readsFrom: {
+            _db.catalogItems,
+            _db.mediaItems,
+            _db.itemTags,
+            _db.images,
+            _db.tags,
+          },
+        )
+        .watch()
+        .asyncMap((rows) async {
+      if (rows.isEmpty) return null;
+      return (await _attachAndMap(rows)).first;
+    });
+  }
+
+  @override
   Future<MediaEntry?> findById(String id) async {
     final rows = await _db.customSelect(
       '$_select WHERE c.id = ?',
@@ -94,6 +115,52 @@ class MediaRepositoryImpl implements MediaRepository {
       await (_db.delete(_db.itemTags)..where((t) => t.itemId.equals(id))).go();
       await _linkTags(id, draft.tagIds);
     });
+  }
+
+  @override
+  Future<void> setStatus(String id, WatchStatus status,
+      {UnfinishedReason? unfinishedReason}) async {
+    final now = _now();
+    var reason = unfinishedReason;
+    if (status != WatchStatus.paused && status != WatchStatus.dropped) {
+      reason = null;
+    }
+    if (reason == UnfinishedReason.waitingEpisodes &&
+        status != WatchStatus.paused) {
+      reason = null;
+    }
+    await (_db.update(_db.catalogItems)..where((t) => t.id.equals(id))).write(
+      CatalogItemsCompanion(
+        status: Value(status),
+        unfinishedReason: Value(reason),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  @override
+  Future<void> setFavorite(String id, bool isFavorite) async {
+    final now = _now();
+    await (_db.update(_db.catalogItems)..where((t) => t.id.equals(id))).write(
+      CatalogItemsCompanion(
+        isFavorite: Value(isFavorite),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  @override
+  Future<void> incrementEventCount(String id) async {
+    final now = _now();
+    await _db.customUpdate(
+      'UPDATE catalog_items SET event_count = event_count + 1, updated_at = ? '
+      'WHERE id = ?',
+      variables: [
+        Variable<int>(now.millisecondsSinceEpoch),
+        Variable<String>(id),
+      ],
+      updates: {_db.catalogItems},
+    );
   }
 
   @override
