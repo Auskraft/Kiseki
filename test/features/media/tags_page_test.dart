@@ -82,18 +82,25 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    // Первый тег по сортировке нормализованного имени — «Драма». Открываем
-    // его меню и пытаемся переименовать в уже занятое «Комедия».
+    // Первый тег по сортировке нормализованного имени — «Драма» (из setUp).
+    // Открываем его меню и переименовываем в уже занятое «Комедия».
     await tester.tap(find.byIcon(Icons.more_horiz_rounded).first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Переименовать'));
-    await tester.pumpAndSettle();
+    // pump с длительностью, НЕ pumpAndSettle: inline-поле автофокусится, и
+    // мигающий курсор — периодический таймер, на котором settle висел бы вечно.
+    await tester.pump(const Duration(milliseconds: 350));
 
     await tester.enterText(find.byType(TextField), 'Комедия');
     await tester.tap(find.text('Готово'));
-    await tester.pump();
-    await tester.pumpAndSettle();
+    await tester.pump(); // запустить _commitRename
+    await tester.pump(const Duration(milliseconds: 400)); // показать SnackBar
 
     expect(find.text('Тег с таким именем уже существует'), findsOneWidget);
+
+    // Размонтировать (закрыть autofocus-поле + Drift-подписку) и дать таймерам
+    // отработать, иначе «Timer still pending» при разборе дерева.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 4));
   });
 }
