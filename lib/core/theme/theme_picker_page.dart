@@ -42,11 +42,6 @@ class ThemePickerPage extends StatelessWidget {
                     icon: Icon(Icons.dark_mode_rounded, size: 17),
                     label: Text('Тёмная'),
                   ),
-                  ButtonSegment(
-                    value: ThemeMode.system,
-                    icon: Icon(Icons.brightness_auto_rounded, size: 17),
-                    label: Text('Авто'),
-                  ),
                 ],
                 selected: {state.themeMode},
                 showSelectedIcon: false,
@@ -57,10 +52,10 @@ class ThemePickerPage extends StatelessWidget {
               child: GridView.builder(
                 padding: EdgeInsets.fromLTRB(16, 4, 16, 24 + systemBottom),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.82,
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 0.6,
                 ),
                 itemCount: KisekiThemeId.values.length,
                 itemBuilder: (context, i) {
@@ -123,53 +118,58 @@ class _ThemeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = tokensFor(id, brightness); // цвета самой темы (для превью)
     final accent = context.tokens.primary; // акцент текущей темы (рамка/чек)
+    const radius = AppRadii.md; // компактнее под мелкие карточки (4 столбца)
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
           color: t.surface,
-          borderRadius: BorderRadius.circular(AppRadii.lg),
+          borderRadius: BorderRadius.circular(radius),
           border: Border.all(
             color: selected ? accent : t.outlineSoft,
-            width: selected ? 2.5 : 1,
+            width: selected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: _MiniPreview(t: t)),
-            Container(
-              color: t.surface,
-              padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      id.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.5 * uiScale,
-                        fontWeight: FontWeight.w600,
-                        color: t.onBg,
+        // Содержимое клипуем ВНУТРЕННИМ радиусом, рамку рисует внешний
+        // контейнер — иначе antiAlias-клип съедал внешнюю кромку рамки.
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(radius - 2.5),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _MiniPreview(t: t)),
+              Container(
+                color: t.surface,
+                padding: const EdgeInsets.fromLTRB(7, 4, 6, 5),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        id.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10.5 * uiScale,
+                          fontWeight: FontWeight.w600,
+                          color: t.onBg,
+                        ),
                       ),
                     ),
-                  ),
-                  if (selected)
-                    Icon(Icons.check_circle_rounded, size: 16, color: accent),
-                ],
+                    if (selected)
+                      Icon(Icons.check_circle_rounded, size: 12, color: accent),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -189,67 +189,67 @@ class _MiniPreview extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: t.surface3,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(4),
             ),
           ),
         );
 
     return Container(
       color: t.bg,
-      padding: const EdgeInsets.all(9),
+      padding: const EdgeInsets.all(6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 26,
+            height: 18,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [t.primary, t.secondary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(5),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Container(
-            width: 40,
-            height: 5,
+            width: 22,
+            height: 3,
             decoration: BoxDecoration(
               color: t.onBg.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Expanded(
             child: Row(
               children: [
                 poster(),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 poster(),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 poster(),
               ],
             ),
           ),
-          const SizedBox(height: 7),
+          const SizedBox(height: 5),
           Row(
             children: [
               Container(
-                width: 26,
-                height: 9,
+                width: 18,
+                height: 6,
                 decoration: BoxDecoration(
                   color: t.primary.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 4),
               Container(
-                width: 16,
-                height: 9,
+                width: 11,
+                height: 6,
                 decoration: BoxDecoration(
                   color: t.surface3,
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ],

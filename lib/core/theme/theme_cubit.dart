@@ -33,10 +33,11 @@ class ThemeCubit extends Cubit<ThemeState> {
 
   static ThemeState _initial(SharedPreferences p) {
     final id = KisekiThemeId.fromName(p.getString(_kTheme) ?? 'base');
+    // Только светлая/тёмная (режим «Авто»/system убран из UI). Легаси-значение
+    // 'system' и пустое → светлая.
     final mode = switch (p.getString(_kMode)) {
-      'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
+      _ => ThemeMode.light,
     };
     return ThemeState(themeId: id, themeMode: mode);
   }
