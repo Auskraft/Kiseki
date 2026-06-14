@@ -11,6 +11,7 @@ import '../../../../core/catalog/tag_repository.dart';
 import '../../../../core/catalog/watch_status.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
+import '../../../../core/ui/skeletons.dart';
 import '../../../../dev/demo_seed.dart';
 import '../../domain/media_entry.dart';
 import '../../domain/media_repository.dart';
@@ -32,7 +33,7 @@ class MainScreen extends StatelessWidget {
         bottom: false,
         child: BlocBuilder<MediaListCubit, MediaListState>(
           builder: (context, state) {
-            if (state.loading) return const SizedBox.shrink();
+            if (state.loading) return const MediaGridSkeleton();
             if (state.isEmpty) return const _EmptyView();
             return _HomeContent(state: state);
           },

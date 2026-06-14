@@ -130,6 +130,35 @@ void main() {
     expect(none, isEmpty);
   });
 
+  test('граничные случаи: эмодзи, CJK и длинные названия', () async {
+    // Эмодзи и смешанный юникод не портятся при хранении (UTF-8 round-trip).
+    const mixed = '🎬 Кино 🍿 日本';
+    final emojiId = await repo.create(const MediaDraft(
+      title: mixed,
+      mediaType: MediaType.movie,
+      format: MediaFormat.single,
+    ));
+    expect((await repo.findById(emojiId))!.title, mixed);
+
+    // CJK-название находится через FTS по префиксу.
+    final cjkId = await repo.create(const MediaDraft(
+      title: '進撃の巨人',
+      mediaType: MediaType.anime,
+      format: MediaFormat.episodic,
+    ));
+    final found = await repo.watch(const MediaListQuery(text: '進撃')).first;
+    expect(found.map((e) => e.id), contains(cjkId));
+
+    // Длинное название на границе CHECK (500) сохраняется целиком.
+    final longTitle = 'А' * 500;
+    final longId = await repo.create(MediaDraft(
+      title: longTitle,
+      mediaType: MediaType.movie,
+      format: MediaFormat.single,
+    ));
+    expect((await repo.findById(longId))!.title, longTitle);
+  });
+
   test('filter by country', () async {
     await repo.create(MediaDraft(
       title: 'Дорама',
