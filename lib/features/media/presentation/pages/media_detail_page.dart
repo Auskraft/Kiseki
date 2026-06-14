@@ -191,6 +191,7 @@ class _Cover extends StatelessWidget {
               children: [
                 _GlassButton(
                   icon: Icons.arrow_back_rounded,
+                  semanticLabel: 'Назад',
                   onTap: () => context.pop(),
                 ),
                 const Spacer(),
@@ -199,6 +200,9 @@ class _Cover extends StatelessWidget {
                       ? Icons.favorite
                       : Icons.favorite_border_rounded,
                   iconColor: entry.isFavorite ? const Color(0xFFFF7BA3) : null,
+                  semanticLabel: entry.isFavorite
+                      ? 'Убрать из избранного'
+                      : 'В избранное',
                   onTap: () => context.read<MediaDetailCubit>().toggleFavorite(),
                 ),
                 const SizedBox(width: 8),
@@ -252,23 +256,35 @@ class _Cover extends StatelessWidget {
 }
 
 class _GlassButton extends StatelessWidget {
-  const _GlassButton({required this.icon, required this.onTap, this.iconColor});
+  const _GlassButton({
+    required this.icon,
+    required this.onTap,
+    this.iconColor,
+    this.semanticLabel,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
   final Color? iconColor;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withValues(alpha: 0.32),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(icon, size: 20, color: iconColor ?? Colors.white),
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      excludeSemantics: true,
+      onTap: onTap,
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.32),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(icon, size: 20, color: iconColor ?? Colors.white),
+          ),
         ),
       ),
     );
@@ -288,6 +304,7 @@ class _MoreButton extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: PopupMenuButton<String>(
         icon: const Icon(Icons.more_horiz_rounded, size: 20, color: Colors.white),
+        tooltip: 'Ещё',
         padding: const EdgeInsets.all(8),
         onSelected: (v) {
           final cubit = context.read<MediaDetailCubit>();
@@ -817,16 +834,22 @@ class _Actions extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Material(
-          color: tk.tint(tk.error, 0.12),
-          borderRadius: BorderRadius.circular(AppRadii.md),
-          child: InkWell(
-            onTap: onDelete,
+        Semantics(
+          button: true,
+          label: 'В корзину',
+          excludeSemantics: true,
+          onTap: onDelete,
+          child: Material(
+            color: tk.tint(tk.error, 0.12),
             borderRadius: BorderRadius.circular(AppRadii.md),
-            child: SizedBox(
-              width: 46,
-              height: 46,
-              child: Icon(Icons.delete_outline_rounded, color: tk.error),
+            child: InkWell(
+              onTap: onDelete,
+              borderRadius: BorderRadius.circular(AppRadii.md),
+              child: SizedBox(
+                width: 46,
+                height: 46,
+                child: Icon(Icons.delete_outline_rounded, color: tk.error),
+              ),
             ),
           ),
         ),

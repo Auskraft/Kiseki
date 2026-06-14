@@ -66,6 +66,7 @@ class _TopBar extends StatelessWidget {
         children: [
           IconButton(
             icon: Icon(Icons.arrow_back_rounded, color: tk.onBg),
+            tooltip: 'Назад',
             onPressed: () => context.pop(),
           ),
           Text('Настройки', style: Theme.of(context).textTheme.titleMedium),

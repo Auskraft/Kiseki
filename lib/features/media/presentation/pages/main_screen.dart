@@ -185,6 +185,7 @@ class _Header extends StatelessWidget {
           ),
           _CircleButton(
             icon: Icons.settings_outlined,
+            semanticLabel: 'Настройки',
             onTap: () => context.push(AppRoute.settings),
           ),
         ],
@@ -194,22 +195,33 @@ class _Header extends StatelessWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.onTap});
+  const _CircleButton({
+    required this.icon,
+    required this.onTap,
+    this.semanticLabel,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: context.tokens.surface,
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Padding(
-          padding: const EdgeInsets.all(9),
-          child: Icon(icon, size: 20, color: context.tokens.onMuted),
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      excludeSemantics: true,
+      onTap: onTap,
+      child: Material(
+        color: context.tokens.surface,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(9),
+            child: Icon(icon, size: 20, color: context.tokens.onMuted),
+          ),
         ),
       ),
     );
@@ -339,38 +351,44 @@ class _FilterButton extends StatelessWidget {
     final tk = context.tokens;
     final hasFilters = context
         .select<MediaListCubit, bool>((c) => c.state.query.hasFilters);
-    return Material(
-      color: tk.surface,
-      borderRadius: BorderRadius.circular(AppRadii.md),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      label: hasFilters ? 'Фильтры, активны' : 'Фильтры',
+      excludeSemantics: true,
+      onTap: onTap,
+      child: Material(
+        color: tk.surface,
         borderRadius: BorderRadius.circular(AppRadii.md),
-        child: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.md),
-            border: Border.all(color: tk.outlineSoft),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(Icons.tune, size: 19, color: tk.onMuted),
-              if (hasFilters)
-                Positioned(
-                  top: 9,
-                  right: 9,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: tk.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: tk.surface, width: 1),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          child: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadii.md),
+              border: Border.all(color: tk.outlineSoft),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(Icons.tune, size: 19, color: tk.onMuted),
+                if (hasFilters)
+                  Positioned(
+                    top: 9,
+                    right: 9,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: tk.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: tk.surface, width: 1),
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

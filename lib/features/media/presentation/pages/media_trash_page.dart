@@ -96,6 +96,7 @@ class _TopBar extends StatelessWidget {
         children: [
           IconButton(
             icon: Icon(Icons.arrow_back_rounded, color: tk.onBg),
+            tooltip: 'Назад',
             onPressed: () => context.pop(),
           ),
           Text('Корзина', style: Theme.of(context).textTheme.titleMedium),
@@ -281,16 +282,22 @@ class _DeleteSquare extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
-    return Material(
-      color: tk.tint(tk.error, 0.12),
-      borderRadius: BorderRadius.circular(AppRadii.sm),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      label: 'Удалить навсегда',
+      excludeSemantics: true,
+      onTap: onTap,
+      child: Material(
+        color: tk.tint(tk.error, 0.12),
         borderRadius: BorderRadius.circular(AppRadii.sm),
-        child: SizedBox(
-          width: 34,
-          height: 34,
-          child: Icon(Icons.delete_outline_rounded, size: 18, color: tk.error),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+          child: SizedBox(
+            width: 34,
+            height: 34,
+            child: Icon(Icons.delete_outline_rounded, size: 18, color: tk.error),
+          ),
         ),
       ),
     );

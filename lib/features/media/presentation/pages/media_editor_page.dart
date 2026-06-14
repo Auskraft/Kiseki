@@ -586,15 +586,21 @@ class _TopBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
       child: Row(
         children: [
-          Material(
-            color: tk.surface,
-            shape: const CircleBorder(),
-            child: InkWell(
-              onTap: onClose,
-              customBorder: const CircleBorder(),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Icon(Icons.close_rounded, size: 20, color: tk.onBg),
+          Semantics(
+            button: true,
+            label: 'Закрыть',
+            excludeSemantics: true,
+            onTap: onClose,
+            child: Material(
+              color: tk.surface,
+              shape: const CircleBorder(),
+              child: InkWell(
+                onTap: onClose,
+                customBorder: const CircleBorder(),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(Icons.close_rounded, size: 20, color: tk.onBg),
+                ),
               ),
             ),
           ),
