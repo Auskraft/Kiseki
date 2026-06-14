@@ -45,24 +45,20 @@ hooks:
 iOS (`libsqlite3.arm64.ios.dylib`, `libsqlite3.*.ios_sim.dylib`) **не вендорены** —
 добавить при первой сборке на macOS, иначе хук упадёт «file not found».
 
-## Android: jniLibs (ВАЖНО)
+## Android (бандлит сам native-asset; при сбое — flutter clean)
 
-`source: test-sqlite3` отдаёт бинарь для `flutter test` на хосте, но в **APK не
-пакуется** (этот режим хука — для хост-тестов, не для app-сборки). Без бандла на
-устройстве `dlopen('libsqlite3.so')` падает («library "libsqlite3.so" not
-found») и приложение застревает на экране восстановления БД. Поэтому android-`.so`
-дополнительно лежат в `android/app/src/main/jniLibs/<abi>/libsqlite3.so` (штатный
-android-бандл нативной либы — гарантированно попадает в APK). Маппинг:
+На android хук из `source: test-sqlite3` **пакует библиотеку сам**: при сборке
+кладёт её в `build/native_assets/android/jniLibs/lib/<abi>/libsqlite3.so`, и
+Flutter мёржит это в APK → `dlopen('libsqlite3.so')` её находит. **Своих копий в
+`android/app/src/main/jniLibs/` добавлять НЕЛЬЗЯ** — будет
+`mergeJniLibFolders: Duplicate resources` (две одинаковые либы).
 
-| third_party | → jniLibs |
-|---|---|
-| `libsqlite3.arm64.android.so` | `arm64-v8a/libsqlite3.so` |
-| `libsqlite3.arm.android.so`   | `armeabi-v7a/libsqlite3.so` |
-| `libsqlite3.x64.android.so`   | `x86_64/libsqlite3.so` |
-
-`android/app/build.gradle.kts` содержит `packaging.jniLibs.pickFirsts += "**/libsqlite3.so"`
-на случай дубля. **Файлы android-`.so` в этой папке удалять нельзя** — их читает
-хук при android-сборке; при обновлении версии перекопируй их и в `jniLibs/`.
+Если на устройстве `dlopen('libsqlite3.so') not found` (приложение застряло на
+экране восстановления БД — это ложный след, БД цела), значит
+`build/native_assets/android` устарел/пуст: его сносили вместе со всем
+`build/native_assets` (обход флака хост-тестов сносит и android). Лечение —
+**`flutter clean` + пересборка**: native-asset перегенерится и попадёт в APK.
+Поэтому в обходе флака удаляй только `build/native_assets/windows`, не всё.
 
 ## Обновление (при апгрейде версии sqlite3)
 

@@ -37,17 +37,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-
-    // Вендоренный libsqlite3.so (FTS5) лежит в src/main/jniLibs/<abi>/ — штатный
-    // android-бандл нативной либы. Нужно потому, что native-asset из
-    // `source: test-sqlite3` в APK НЕ попадает (тот режим для хост-тестов), и без
-    // этого `dlopen('libsqlite3.so')` падает на устройстве. pickFirsts — защита от
-    // дубля, если native-asset всё же принесёт свой: это тот же релизный бинарь.
-    packaging {
-        jniLibs {
-            pickFirsts.add("**/libsqlite3.so")
-        }
-    }
 }
 
 flutter {
