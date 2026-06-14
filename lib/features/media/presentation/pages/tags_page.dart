@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/di/injector.dart';
 import '../../../../core/catalog/tag.dart';
 import '../../../../core/catalog/tag_repository.dart';
+import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/confirm_sheet.dart';
@@ -142,12 +143,24 @@ class _TagRowState extends State<_TagRow> {
     setState(() => _editing = true);
   }
 
-  void _commitRename() {
+  Future<void> _commitRename() async {
     final name = _controller.text.trim();
-    if (name.isNotEmpty && name != _tag.name) {
-      context.read<TagManagerCubit>().rename(_tag.id, name);
+    if (name.isEmpty || name == _tag.name) {
+      setState(() => _editing = false);
+      return;
     }
-    setState(() => _editing = false);
+    final messenger = ScaffoldMessenger.of(context);
+    final cubit = context.read<TagManagerCubit>();
+    try {
+      await cubit.rename(_tag.id, name);
+      if (mounted) setState(() => _editing = false);
+    } on Failure catch (e) {
+      // Коллизия имени (или иная типизированная ошибка) — сообщаем и оставляем
+      // поле открытым, чтобы пользователь поправил имя, а не потерял ввод.
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 
   Future<void> _pickColor() async {

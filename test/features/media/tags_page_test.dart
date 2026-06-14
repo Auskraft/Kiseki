@@ -71,4 +71,29 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 1));
   });
+
+  testWidgets('переименование в имя существующего тега показывает SnackBar',
+      (tester) async {
+    await getIt<TagRepository>().ensure('Комедия');
+
+    await tester.pumpWidget(MaterialApp(
+      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
+      home: const TagsPage(),
+    ));
+    await tester.pumpAndSettle();
+
+    // Первый тег по сортировке нормализованного имени — «Драма». Открываем
+    // его меню и пытаемся переименовать в уже занятое «Комедия».
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Переименовать'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Комедия');
+    await tester.tap(find.text('Готово'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Тег с таким именем уже существует'), findsOneWidget);
+  });
 }
