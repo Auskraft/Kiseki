@@ -128,6 +128,25 @@ void main() {
     expect(none, isEmpty);
   });
 
+  test('filter by country', () async {
+    await repo.create(MediaDraft(
+      title: 'Дорама',
+      mediaType: MediaType.drama,
+      format: MediaFormat.episodic,
+      country: 'KR',
+    ));
+    await repo.create(MediaDraft(
+      title: 'Аниме',
+      mediaType: MediaType.anime,
+      format: MediaFormat.episodic,
+      country: 'JP',
+    ));
+
+    final onlyKr =
+        await repo.watch(const MediaListQuery(countries: {'KR'})).first;
+    expect(onlyKr.map((e) => e.title), ['Дорама']);
+  });
+
   test('filter by status and favorites', () async {
     final watching = await repo.create(seriesDraft(status: WatchStatus.watching));
     await repo.create(seriesDraft(title: 'X', status: WatchStatus.completed));

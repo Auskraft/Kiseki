@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,13 +13,16 @@ import '../../../../dev/demo_seed.dart';
 import '../../domain/media_entry.dart';
 import '../../domain/media_repository.dart';
 import '../cubit/media_list_cubit.dart';
+import '../widgets/filter_sheet.dart';
 import '../widgets/media_card.dart';
+import '../widgets/media_list_tile.dart';
 import '../widgets/mini_poster.dart';
 import 'media_detail_page.dart';
 import 'media_editor_page.dart';
 import 'settings_page.dart';
 
-/// Главный экран — грид картотеки + полки «Жду серии» и «Смотрю сейчас».
+/// Главный экран — грид/список картотеки + полки «Жду серии»/«Смотрю сейчас»,
+/// поиск, фильтр и сортировка.
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
 
@@ -67,50 +72,88 @@ class _HomeContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: _Header(count: state.items.length, waiting: waiting.length),
         ),
-        const SliverToBoxAdapter(child: _SearchRow()),
-        if (waiting.isNotEmpty)
-          SliverToBoxAdapter(
-            child: _Shelf(
-              title: 'Жду новые серии',
-              icon: Icons.hourglass_bottom_rounded,
-              color: tk.statusColor(WatchStatus.paused),
-              items: waiting,
-            ),
-          ),
-        if (watchingNow.isNotEmpty)
-          SliverToBoxAdapter(
-            child: _Shelf(
-              title: 'Смотрю сейчас',
-              icon: Icons.play_arrow_rounded,
-              color: tk.statusColor(WatchStatus.watching),
-              items: watchingNow,
-            ),
-          ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-            child: Text('Все карточки', style: Theme.of(context).textTheme.titleMedium),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 178,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.58,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, i) => MediaCard(
-                entry: state.items[i],
-                onTap: () => _openDetail(context, state.items[i].id),
+        const SliverToBoxAdapter(child: _SearchBar()),
+        if (state.noResults)
+          const SliverToBoxAdapter(child: _NoResults())
+        else ...[
+          if (waiting.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _Shelf(
+                title: 'Жду новые серии',
+                icon: Icons.hourglass_bottom_rounded,
+                color: tk.statusColor(WatchStatus.paused),
+                items: waiting,
               ),
-              childCount: state.items.length,
+            ),
+          if (watchingNow.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _Shelf(
+                title: 'Смотрю сейчас',
+                icon: Icons.play_arrow_rounded,
+                color: tk.statusColor(WatchStatus.watching),
+                items: watchingNow,
+              ),
+            ),
+          SliverToBoxAdapter(child: _ResultsHeader(state: state)),
+          if (state.viewMode == ViewMode.grid)
+            _GridSliver(items: state.items)
+          else
+            _ListSliver(items: state.items),
+        ],
+      ],
+    );
+  }
+}
+
+class _GridSliver extends StatelessWidget {
+  const _GridSliver({required this.items});
+
+  final List<MediaEntry> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 178,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.58,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, i) => MediaCard(
+            entry: items[i],
+            onTap: () => _openDetail(context, items[i].id),
+          ),
+          childCount: items.length,
+        ),
+      ),
+    );
+  }
+}
+
+class _ListSliver extends StatelessWidget {
+  const _ListSliver({required this.items});
+
+  final List<MediaEntry> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, i) => Padding(
+            padding: const EdgeInsets.only(bottom: 9),
+            child: MediaListTile(
+              entry: items[i],
+              onTap: () => _openDetail(context, items[i].id),
             ),
           ),
+          childCount: items.length,
         ),
-      ],
+      ),
     );
   }
 }
@@ -174,44 +217,288 @@ class _CircleButton extends StatelessWidget {
   }
 }
 
-class _SearchRow extends StatelessWidget {
-  const _SearchRow();
+/// Поиск (дебаунс ~280 мс) + кнопка фильтра с точкой-индикатором.
+class _SearchBar extends StatefulWidget {
+  const _SearchBar();
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  late final TextEditingController _controller;
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+        text: context.read<MediaListCubit>().state.query.text);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 280), () {
+      context.read<MediaListCubit>().setSearch(value);
+    });
+  }
+
+  void _clear() {
+    _debounce?.cancel();
+    _controller.clear();
+    context.read<MediaListCubit>().setSearch('');
+  }
+
+  Future<void> _openFilters() async {
+    final cubit = context.read<MediaListCubit>();
+    final result = await showFilterSheet(context, cubit.state.query);
+    if (result != null) cubit.setQuery(result);
+  }
 
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
+    return BlocListener<MediaListCubit, MediaListState>(
+      // Внешняя смена запроса (сброс фильтров) синхронизирует поле.
+      listenWhen: (a, b) => a.query.text != b.query.text,
+      listener: (context, state) {
+        final text = state.query.text ?? '';
+        if (_controller.text != text) {
+          _controller.text = text;
+          _controller.selection =
+              TextSelection.collapsed(offset: text.length);
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: tk.surface,
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                  border: Border.all(color: tk.outlineSoft),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, size: 18, color: tk.onFaint),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        onChanged: _onChanged,
+                        textInputAction: TextInputAction.search,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        decoration: InputDecoration(
+                          isCollapsed: true,
+                          border: InputBorder.none,
+                          hintText: 'Поиск',
+                          hintStyle: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: _controller,
+                      builder: (context, value, _) => value.text.isEmpty
+                          ? const SizedBox.shrink()
+                          : GestureDetector(
+                              onTap: _clear,
+                              child: Icon(Icons.close_rounded,
+                                  size: 17, color: tk.onFaint),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _FilterButton(onTap: _openFilters),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    final hasFilters = context
+        .select<MediaListCubit, bool>((c) => c.state.query.hasFilters);
+    return Material(
+      color: tk.surface,
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            border: Border.all(color: tk.outlineSoft),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(Icons.tune, size: 19, color: tk.onMuted),
+              if (hasFilters)
+                Positioned(
+                  top: 9,
+                  right: 9,
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: tk.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: tk.surface, width: 1),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Заголовок результатов: «Все карточки» / «Найдено N» + сброс + грид/список.
+class _ResultsHeader extends StatelessWidget {
+  const _ResultsHeader({required this.state});
+
+  final MediaListState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    final filtered = state.hasSearchOrFilter;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
       child: Row(
         children: [
-          Expanded(
-            child: Container(
-              height: 42,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: tk.surface,
-                borderRadius: BorderRadius.circular(AppRadii.pill),
-                border: Border.all(color: tk.outlineSoft),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.search, size: 18, color: tk.onFaint),
-                  const SizedBox(width: 8),
-                  Text('Поиск', style: Theme.of(context).textTheme.bodyMedium),
-                ],
-              ),
-            ),
+          Text(
+            filtered ? 'Найдено ${state.items.length}' : 'Все карточки',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(width: 8),
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: tk.surface,
-              borderRadius: BorderRadius.circular(AppRadii.md),
-              border: Border.all(color: tk.outlineSoft),
+          if (filtered) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => context.read<MediaListCubit>().resetFilters(),
+              child: Text('сбросить',
+                  style: TextStyle(
+                      fontSize: 12 * uiScale,
+                      fontWeight: FontWeight.w600,
+                      color: tk.primary)),
             ),
-            child: Icon(Icons.tune, size: 19, color: tk.onMuted),
+          ],
+          const Spacer(),
+          _ViewToggle(mode: state.viewMode),
+        ],
+      ),
+    );
+  }
+}
+
+class _ViewToggle extends StatelessWidget {
+  const _ViewToggle({required this.mode});
+
+  final ViewMode mode;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    Widget btn(IconData icon, ViewMode m) {
+      final active = m == mode;
+      return GestureDetector(
+        onTap: () => context.read<MediaListCubit>().setViewMode(m),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: active ? tk.surface2 : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadii.xs),
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Icon(icon,
+              size: 17, color: active ? tk.onBg : tk.onFaint),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: tk.surface3,
+        borderRadius: BorderRadius.circular(AppRadii.sm),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          btn(Icons.grid_view_rounded, ViewMode.grid),
+          const SizedBox(width: 2),
+          btn(Icons.view_agenda_outlined, ViewMode.list),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoResults extends StatelessWidget {
+  const _NoResults();
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 60, 32, 32),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: tk.surface3,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.search_off_rounded, size: 30, color: tk.onFaint),
+          ),
+          const SizedBox(height: 16),
+          Text('Ничего не найдено', style: text.headlineSmall),
+          const SizedBox(height: 6),
+          Text('Попробуйте изменить запрос или фильтры',
+              style: text.bodyMedium, textAlign: TextAlign.center),
+          const SizedBox(height: 18),
+          OutlinedButton.icon(
+            onPressed: () => context.read<MediaListCubit>().resetFilters(),
+            icon: const Icon(Icons.restart_alt_rounded, size: 18),
+            label: const Text('Сбросить фильтры'),
           ),
         ],
       ),

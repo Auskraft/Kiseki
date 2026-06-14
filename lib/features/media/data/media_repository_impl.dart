@@ -396,6 +396,7 @@ class MediaRepositoryImpl implements MediaRepository {
     inClause('m.media_type', q.mediaTypes.map((t) => t.code));
     inClause('m.format', q.formats.map((f) => f.code));
     inClause('c.unfinished_reason', q.unfinishedReasons.map((r) => r.code));
+    inClause('m.country', q.countries);
 
     if (q.onlyFavorites) w.add('c.is_favorite = 1');
     if (q.onlyUnrated) w.add('c.rating IS NULL');
