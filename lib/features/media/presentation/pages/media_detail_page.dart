@@ -17,7 +17,7 @@ import '../../../../core/ui/status_visuals.dart';
 import '../../domain/media_entry.dart';
 import '../../domain/media_repository.dart';
 import '../cubit/media_detail_cubit.dart';
-import '../widgets/poster_placeholder.dart';
+import '../widgets/cover_image.dart';
 import '../widgets/status_change_sheet.dart';
 import 'media_editor_page.dart';
 
@@ -173,9 +173,9 @@ class _Cover extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          PosterPlaceholder(
-            type: entry.mediaType,
-            title: entry.title,
+          CoverImage(
+            entry: entry,
+            full: true,
             radius: 0,
             letterSize: 150,
           ),

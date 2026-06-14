@@ -33,6 +33,7 @@ void main() {
     WatchStatus status = WatchStatus.watching,
     Rating? rating,
     List<String> tagIds = const [],
+    String? cover,
   }) {
     return MediaDraft(
       title: title,
@@ -47,6 +48,7 @@ void main() {
       currentEpisode: 5,
       totalEpisodes: 62,
       tagIds: tagIds,
+      coverImageId: cover,
       startedAt: CatalogDate(DateTime.utc(2025, 3), DatePrecision.month),
     );
   }
@@ -166,6 +168,20 @@ void main() {
         .watch(const MediaListQuery(sortField: CatalogSortField.rating))
         .first;
     expect(desc.map((e) => e.id), [high, low, unrated]);
+  });
+
+  test('обложка: create пишет строку images, update заменяет/убирает', () async {
+    final id = await repo.create(seriesDraft(cover: 'img-1'));
+    expect((await repo.findById(id))!.cover?.id, 'img-1');
+    expect(await repo.allImageIds(), {'img-1'});
+
+    await repo.update(id, seriesDraft(cover: 'img-2'));
+    expect((await repo.findById(id))!.cover?.id, 'img-2');
+    expect(await repo.allImageIds(), {'img-2'}); // старая строка снесена
+
+    await repo.update(id, seriesDraft(cover: null));
+    expect((await repo.findById(id))!.cover, isNull);
+    expect(await repo.allImageIds(), isEmpty);
   });
 
   test('purge cascades to media/tags rows', () async {

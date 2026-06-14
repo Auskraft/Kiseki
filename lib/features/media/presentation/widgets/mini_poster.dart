@@ -9,7 +9,7 @@ import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/ui/poster_overlays.dart';
 import '../../../../core/ui/status_visuals.dart';
 import '../../domain/media_entry.dart';
-import 'poster_placeholder.dart';
+import 'cover_image.dart';
 
 /// Компактный постер для горизонтальных полок. Заполняет высоту, заданную
 /// полкой (используется внутри height-bounded горизонтального списка).
@@ -45,11 +45,7 @@ class MiniPoster extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              PosterPlaceholder(
-                type: entry.mediaType,
-                title: entry.title,
-                letterSize: 44,
-              ),
+              CoverImage(entry: entry, letterSize: 44),
               Positioned(
                 top: 5,
                 left: 5,

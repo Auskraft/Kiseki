@@ -100,6 +100,7 @@ class MediaRepositoryImpl implements MediaRepository {
       await _db.into(_db.catalogItems).insert(_coreInsert(id, draft, now));
       await _db.into(_db.mediaItems).insert(_mediaInsert(id, draft));
       await _linkTags(id, draft.tagIds);
+      await _setCover(id, draft.coverImageId, now);
     });
     return id;
   }
@@ -114,6 +115,7 @@ class MediaRepositoryImpl implements MediaRepository {
           .write(_mediaUpdate(draft));
       await (_db.delete(_db.itemTags)..where((t) => t.itemId.equals(id))).go();
       await _linkTags(id, draft.tagIds);
+      await _setCover(id, draft.coverImageId, now);
     });
   }
 
@@ -198,6 +200,12 @@ class MediaRepositoryImpl implements MediaRepository {
     );
   }
 
+  @override
+  Future<Set<String>> allImageIds() async {
+    final rows = await _db.customSelect('SELECT id FROM images').get();
+    return rows.map((r) => r.read<String>('id')).toSet();
+  }
+
   // ─────────────────────────── companions ───────────────────────────
 
   CatalogItemsCompanion _coreInsert(String id, MediaDraft d, DateTime now) {
@@ -275,6 +283,17 @@ class MediaRepositoryImpl implements MediaRepository {
       await _db.into(_db.itemTags).insert(
             ItemTagsCompanion.insert(itemId: itemId, tagId: tagId),
             mode: InsertMode.insertOrIgnore,
+          );
+    }
+  }
+
+  /// Единственная обложка (итерация 1): сносим строки `images` карточки и
+  /// ставим новую (если есть). Файлы пишет/чистит вызывающий слой (§4.5/§7.3).
+  Future<void> _setCover(String itemId, String? coverId, DateTime now) async {
+    await (_db.delete(_db.images)..where((t) => t.itemId.equals(itemId))).go();
+    if (coverId != null) {
+      await _db.into(_db.images).insert(
+            ImagesCompanion.insert(id: coverId, itemId: itemId, createdAt: now),
           );
     }
   }

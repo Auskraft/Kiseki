@@ -8,7 +8,7 @@ import '../../../../core/ui/confirm_sheet.dart';
 import '../../domain/media_entry.dart';
 import '../../domain/media_repository.dart';
 import '../cubit/media_trash_cubit.dart';
-import '../widgets/poster_placeholder.dart';
+import '../widgets/cover_image.dart';
 
 /// Сколько дней карточка хранится в корзине (информационно; авто-очистка по
 /// сроку — nice-to-have, пока удаление ручное).
@@ -186,9 +186,8 @@ class _TrashRow extends StatelessWidget {
             child: SizedBox(
               width: 50,
               height: 70,
-              child: PosterPlaceholder(
-                type: entry.mediaType,
-                title: entry.title,
+              child: CoverImage(
+                entry: entry,
                 radius: AppRadii.xs,
                 letterSize: 26,
               ),

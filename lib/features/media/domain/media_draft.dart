@@ -29,6 +29,7 @@ class MediaDraft {
     this.lastActivityAt,
     this.finishedAt,
     this.tagIds = const [],
+    this.coverImageId,
   });
 
   final String title;
@@ -51,4 +52,8 @@ class MediaDraft {
   final CatalogDate? lastActivityAt;
   final CatalogDate? finishedAt;
   final List<String> tagIds;
+
+  /// UUID обложки (файлы уже сохранены [ImageStorage]). `null` — без обложки.
+  /// Репозиторий записывает строку `images` в той же транзакции (§4.5).
+  final String? coverImageId;
 }

@@ -48,4 +48,7 @@ abstract interface class MediaRepository {
   /// Окончательно удаляет ВСЕ карточки из корзины («Очистить корзину»).
   /// CASCADE убирает доменные строки/теги/картинки; FTS — триггером.
   Future<void> purgeAllTrashed();
+
+  /// Все UUID картинок из БД (живые и в корзине) — для orphan-sweeper.
+  Future<Set<String>> allImageIds();
 }

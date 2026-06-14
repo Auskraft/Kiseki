@@ -7,7 +7,7 @@ import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/status_visuals.dart';
 import '../../domain/media_entry.dart';
-import 'poster_placeholder.dart';
+import 'cover_image.dart';
 
 /// Строка списочного вида (макет 01b): thumbnail + название/мета/статус +
 /// крупная оценка справа.
@@ -58,9 +58,8 @@ class MediaListTile extends StatelessWidget {
               SizedBox(
                 width: 50,
                 height: 70,
-                child: PosterPlaceholder(
-                  type: entry.mediaType,
-                  title: entry.title,
+                child: CoverImage(
+                  entry: entry,
                   radius: AppRadii.xs,
                   letterSize: 26,
                 ),

@@ -7,7 +7,7 @@ import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/poster_overlays.dart';
 import '../../../../core/ui/status_visuals.dart';
 import '../../domain/media_entry.dart';
-import 'poster_placeholder.dart';
+import 'cover_image.dart';
 
 /// Карточка медиа в гриде: постер (заполняет ячейку) + значки (статус, оценка,
 /// избранное, прогресс) + название и подзаголовок «год · тип».
@@ -51,7 +51,7 @@ class MediaCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  PosterPlaceholder(type: entry.mediaType, title: entry.title),
+                  CoverImage(entry: entry),
                   Positioned(
                     top: 6,
                     left: 6,
