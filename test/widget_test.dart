@@ -47,7 +47,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Картотека'), findsOneWidget);
+    expect(find.text('Главная'), findsOneWidget);
     expect(find.text('Тестовый фильм'), findsOneWidget);
   });
 }

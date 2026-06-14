@@ -477,11 +477,21 @@ class _VisualStyleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final navStyle = context.watch<NavStyleCubit>().state.style;
     return _Card(
-      child: _Row(
-        icon: Icons.dashboard_rounded,
-        title: 'Стиль навигации',
-        trailing: navStyle.title,
-        onTap: () => context.push(AppRoute.navStyle),
+      child: Column(
+        children: [
+          _Row(
+            icon: Icons.dashboard_rounded,
+            title: 'Стиль навигации',
+            trailing: navStyle.title,
+            onTap: () => context.push(AppRoute.navStyle),
+          ),
+          const _Divider(),
+          _Row(
+            icon: Icons.apps_rounded,
+            title: 'Иконки меню',
+            onTap: () => context.push(AppRoute.menuIcons),
+          ),
+        ],
       ),
     );
   }

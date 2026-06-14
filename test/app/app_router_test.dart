@@ -8,6 +8,7 @@ import 'package:kiseki/app/router/app_router.dart';
 import 'package:kiseki/core/catalog/tag_repository.dart';
 import 'package:kiseki/core/catalog/tag_repository_impl.dart';
 import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/core/nav/menu_icons.dart';
 import 'package:kiseki/core/nav/nav_style.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
 import 'package:kiseki/core/theme/kiseki_themes.dart';
@@ -59,6 +60,8 @@ void main() {
     addTearDown(listCubit.close);
     final navCubit = NavStyleCubit(prefs);
     addTearDown(navCubit.close);
+    final iconsCubit = MenuIconsCubit(prefs);
+    addTearDown(iconsCubit.close);
 
     await tester.pumpWidget(
       MultiBlocProvider(
@@ -66,6 +69,7 @@ void main() {
           BlocProvider.value(value: themeCubit),
           BlocProvider.value(value: listCubit),
           BlocProvider.value(value: navCubit),
+          BlocProvider.value(value: iconsCubit),
         ],
         child: MaterialApp.router(
           theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
@@ -77,8 +81,8 @@ void main() {
 
     // MainScreen построен go_router'ом и достал MediaListCubit (провайдер выше
     // MaterialApp.router) → список отрисован.
-    // «Картотека» теперь и в шапке экрана, и подписью вкладки в нав-баре.
-    expect(find.text('Картотека'), findsWidgets);
+    // «Главная» — и в шапке экрана, и подписью вкладки в нав-баре.
+    expect(find.text('Главная'), findsWidgets);
     expect(find.text('Сквозь снег'), findsWidgets);
   });
 }

@@ -10,6 +10,7 @@ import 'capsule_nav_bar.dart';
 import 'classic_nav_bar.dart';
 import 'coming_soon_page.dart';
 import 'floating_nav_bar.dart';
+import 'menu_icons.dart';
 import 'nav_style.dart';
 
 /// Оболочка приложения: 4 вкладки (Главная/Календарь/Картотека/Настройки) в
@@ -40,6 +41,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final nav = context.watch<NavStyleCubit>().state;
+    final items = navItemsFor(context.watch<MenuIconsCubit>().state);
     final builders = <WidgetBuilder>[
       (_) => const MainScreen(),
       (_) => const ComingSoonPage(
@@ -76,16 +78,16 @@ class _MainShellState extends State<MainShell> {
             _swipe(-1);
           }
         },
-        child: _navBar(nav),
+        child: _navBar(nav, items),
       ),
     );
   }
 
-  Widget _navBar(NavStyleState s) {
+  Widget _navBar(NavStyleState s, List<NavBarItem> items) {
     switch (s.style) {
       case NavBarStyle.classic:
         return ClassicNavBar(
-          items: kNavDestinations,
+          items: items,
           currentIndex: _index,
           onTap: _go,
           glass: s.glass,
@@ -93,7 +95,7 @@ class _MainShellState extends State<MainShell> {
         );
       case NavBarStyle.floating:
         return FloatingNavBar(
-          items: kNavDestinations,
+          items: items,
           currentIndex: _index,
           onTap: _go,
           glass: s.glass,
@@ -101,7 +103,7 @@ class _MainShellState extends State<MainShell> {
         );
       case NavBarStyle.capsule:
         return CapsuleNavBar(
-          items: kNavDestinations,
+          items: items,
           currentIndex: _index,
           onTap: _go,
           glass: s.glass,

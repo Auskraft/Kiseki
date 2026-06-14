@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/nav/main_shell.dart';
+import '../../core/nav/menu_icons_picker_page.dart';
 import '../../core/nav/nav_style_picker_page.dart';
 import '../../core/theme/theme_context.dart';
 import '../../features/media/presentation/pages/media_detail_page.dart';
@@ -20,6 +21,7 @@ abstract final class AppRoute {
   static const tags = '/settings/tags';
   static const trash = '/settings/trash';
   static const navStyle = '/settings/nav-style';
+  static const menuIcons = '/settings/menu-icons';
 
   /// Карточка по UUID (deep-link).
   static String detail(String id) => '/item/$id';
@@ -75,6 +77,10 @@ GoRouter createAppRouter() => GoRouter(
         GoRoute(
           path: AppRoute.navStyle,
           builder: (context, state) => const NavStylePickerPage(),
+        ),
+        GoRoute(
+          path: AppRoute.menuIcons,
+          builder: (context, state) => const MenuIconsPickerPage(),
         ),
       ],
       errorBuilder: (context, state) => const _RouteNotFound(),

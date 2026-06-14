@@ -170,7 +170,7 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Картотека', style: text.displaySmall),
+          Text('Главная', style: text.displaySmall),
           const SizedBox(height: 2),
           Text(subtitle, style: text.bodySmall),
         ],

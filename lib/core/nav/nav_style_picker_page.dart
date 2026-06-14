@@ -9,6 +9,7 @@ import 'capsule_nav_bar.dart';
 import 'classic_nav_bar.dart';
 import 'floating_nav_bar.dart';
 import 'glass_level_bar.dart';
+import 'menu_icons.dart';
 import 'nav_style.dart';
 
 /// Пикер стиля нижней навигации: сверху живой «телефон» с выбранным баром, под
@@ -26,6 +27,7 @@ class NavStylePickerPage extends StatelessWidget {
     final tk = context.tokens;
     final s = context.watch<NavStyleCubit>().state;
     final cubit = context.read<NavStyleCubit>();
+    final items = navItemsFor(context.watch<MenuIconsCubit>().state);
     final systemBottom = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
@@ -45,6 +47,7 @@ class NavStylePickerPage extends StatelessWidget {
                     child: _PhonePreview(
                       key: ValueKey(s.style),
                       state: s,
+                      items: items,
                       currentIndex: _previewIndex,
                     ),
                   ),
@@ -284,10 +287,12 @@ class _PhonePreview extends StatelessWidget {
   const _PhonePreview({
     super.key,
     required this.state,
+    required this.items,
     required this.currentIndex,
   });
 
   final NavStyleState state;
+  final List<NavBarItem> items;
   final int currentIndex;
 
   static const double _vw = 380;
@@ -302,7 +307,7 @@ class _PhonePreview extends StatelessWidget {
     switch (state.style) {
       case NavBarStyle.classic:
         bar = ClassicNavBar(
-          items: kNavDestinations,
+          items: items,
           currentIndex: currentIndex,
           onTap: noop,
           glass: state.glass,
@@ -310,7 +315,7 @@ class _PhonePreview extends StatelessWidget {
         );
       case NavBarStyle.floating:
         bar = FloatingNavBar(
-          items: kNavDestinations,
+          items: items,
           currentIndex: currentIndex,
           onTap: noop,
           glass: state.glass,
@@ -318,7 +323,7 @@ class _PhonePreview extends StatelessWidget {
         );
       case NavBarStyle.capsule:
         bar = CapsuleNavBar(
-          items: kNavDestinations,
+          items: items,
           currentIndex: currentIndex,
           onTap: noop,
           glass: state.glass,
