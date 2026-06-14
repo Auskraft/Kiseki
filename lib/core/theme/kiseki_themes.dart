@@ -41,6 +41,7 @@ const _signalsLight = (
   error: Color(0xFFC0493B),
   errorContainer: Color(0xFFF7D9D4),
   onErrorContainer: Color(0xFF511712),
+  favorite: Color(0xFFE0608A),
 );
 const _signalsDark = (
   success: Color(0xFF7FBE86),
@@ -48,6 +49,7 @@ const _signalsDark = (
   error: Color(0xFFE48A7E),
   errorContainer: Color(0xFF5A211A),
   onErrorContainer: Color(0xFFF7D9D4),
+  favorite: Color(0xFFFF7BA3),
 );
 
 const _scoreLight = <Color>[
@@ -175,6 +177,7 @@ KisekiTokens tokensFor(KisekiThemeId id, Brightness brightness) {
     error: sig.error,
     errorContainer: sig.errorContainer,
     onErrorContainer: sig.onErrorContainer,
+    favorite: sig.favorite,
     scoreRamp: dark ? _scoreDark : _scoreLight,
     statusColors: dark ? _statusDark : _statusLight,
   );
@@ -184,7 +187,7 @@ KisekiTokens tokensFor(KisekiThemeId id, Brightness brightness) {
 Color themeSwatch(KisekiThemeId id) => _palettes[id]!.dark.primary;
 
 /// Готовый `ThemeData` для (тема, режим): M3 ColorScheme + KisekiTokens +
-/// типографика Onest/Lora (с уменьшающим [uiScale]).
+/// типографика Onest/Unbounded (с уменьшающим [uiScale]).
 ThemeData buildKisekiTheme(KisekiThemeId id, Brightness brightness) {
   final t = tokensFor(id, brightness);
   final scheme = ColorScheme.fromSeed(

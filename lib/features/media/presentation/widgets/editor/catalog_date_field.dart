@@ -142,7 +142,7 @@ class _GranularityTrack extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                 decoration: BoxDecoration(
                   color: value == precision ? tk.surface2 : Colors.transparent,
-                  borderRadius: BorderRadius.circular(7),
+                  borderRadius: BorderRadius.circular(AppRadii.xs),
                 ),
                 child: Text(
                   label,

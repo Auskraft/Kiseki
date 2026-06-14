@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_dimens.dart';
 import '../../domain/media_type.dart';
@@ -47,9 +46,11 @@ class PosterPlaceholder extends StatelessWidget {
         child: Center(
           child: Text(
             letter,
-            style: GoogleFonts.lora(
+            // Unbounded (бандл, ADR-18) вместо снятой Lora.
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontVariations: const [FontVariation('wght', 700)],
               fontSize: letterSize,
-              fontWeight: FontWeight.w700,
               color: Colors.white.withValues(alpha: 0.16),
             ),
           ),

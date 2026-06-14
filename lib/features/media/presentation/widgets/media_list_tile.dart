@@ -82,8 +82,7 @@ class MediaListTile extends StatelessWidget {
                         ),
                         if (entry.isFavorite) ...[
                           const SizedBox(width: 5),
-                          const Icon(Icons.favorite,
-                              size: 12, color: Color(0xFFE0608A)),
+                          Icon(Icons.favorite, size: 12, color: tk.favorite),
                         ],
                       ],
                     ),

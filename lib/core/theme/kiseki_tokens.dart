@@ -27,6 +27,7 @@ class KisekiTokens extends ThemeExtension<KisekiTokens> {
     required this.error,
     required this.errorContainer,
     required this.onErrorContainer,
+    required this.favorite,
     required this.scoreRamp,
     required this.statusColors,
   });
@@ -50,6 +51,9 @@ class KisekiTokens extends ThemeExtension<KisekiTokens> {
   final Color error;
   final Color errorContainer;
   final Color onErrorContainer;
+
+  /// Цвет «избранного» (сердечко) на поверхности — не только над постером.
+  final Color favorite;
 
   /// Шкала оценки 0–100 (cold→warm), 5 ступеней.
   final List<Color> scoreRamp;
@@ -94,6 +98,7 @@ class KisekiTokens extends ThemeExtension<KisekiTokens> {
     Color? error,
     Color? errorContainer,
     Color? onErrorContainer,
+    Color? favorite,
     List<Color>? scoreRamp,
     Map<WatchStatus, Color>? statusColors,
   }) {
@@ -117,6 +122,7 @@ class KisekiTokens extends ThemeExtension<KisekiTokens> {
       error: error ?? this.error,
       errorContainer: errorContainer ?? this.errorContainer,
       onErrorContainer: onErrorContainer ?? this.onErrorContainer,
+      favorite: favorite ?? this.favorite,
       scoreRamp: scoreRamp ?? this.scoreRamp,
       statusColors: statusColors ?? this.statusColors,
     );
@@ -146,6 +152,7 @@ class KisekiTokens extends ThemeExtension<KisekiTokens> {
       error: c(error, other.error),
       errorContainer: c(errorContainer, other.errorContainer),
       onErrorContainer: c(onErrorContainer, other.onErrorContainer),
+      favorite: c(favorite, other.favorite),
       scoreRamp: [
         for (var i = 0; i < scoreRamp.length; i++)
           c(scoreRamp[i], other.scoreRamp[i]),
