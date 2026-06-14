@@ -116,7 +116,9 @@ class MediaEditorState extends Equatable {
   /// «Жду серии» доступно только при `paused` + `episodic` (ADR-08).
   bool get canOfferWaiting => status == WatchStatus.paused && isEpisodic;
 
-  bool get canSave => title.trim().isNotEmpty && !saving;
+  // !processingImage: иначе Save во время сжатия только что выбранной обложки
+  // сохранил бы карточку без неё (новый id ещё не в state), а файл осиротел.
+  bool get canSave => title.trim().isNotEmpty && !saving && !processingImage;
 
   CatalogDate? dateFor(EditorDateSlot slot) => switch (slot) {
         EditorDateSlot.started => startedAt,
@@ -488,8 +490,14 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
   Future<void> close() async {
     await _tagsSub.cancel();
     // Отмена формы: стагнутая (не сохранённая) обложка осиротела — удаляем.
+    // НО не во время сохранения (state.saving): иначе при системном «назад»
+    // в момент коммита мы бы удалили файлы, на которые сошлётся сохранённая
+    // карточка (битая обложка, не чинится sweeper'ом — id живой).
     final staged = state.coverImageId;
-    if (!state.justSaved && staged != null && staged != _loadedCoverId) {
+    if (!state.justSaved &&
+        !state.saving &&
+        staged != null &&
+        staged != _loadedCoverId) {
       await _images.deleteFiles(staged);
     }
     return super.close();

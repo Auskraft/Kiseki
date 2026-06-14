@@ -53,11 +53,11 @@ Future<void> runWipeAndRestart(BuildContext context) async {
 Future<void> _swap(UnpackedBackup unpacked) async {
   final root = getIt<MediaPaths>().root;
   final dbFile = File(p.join(root.path, kDbFileName));
+  final safety = File(p.join(root.path, 'kiseki_safety.sqlite'));
 
   // Safety-снимок текущей БД (на случай сбоя) — пока она ещё открыта.
   try {
-    await getIt<AppDatabase>()
-        .snapshotInto(p.join(root.path, 'kiseki_safety.sqlite'));
+    await getIt<AppDatabase>().snapshotInto(safety.path);
   } catch (_) {
     // Не критично — продолжаем восстановление.
   }
@@ -68,4 +68,18 @@ Future<void> _swap(UnpackedBackup unpacked) async {
 
   await getIt.reset();
   await configureDependencies();
+
+  // FTS-индекс после restore (§4.4/ADR-10): снимок несёт FTS verbatim, но
+  // пересборка страхует от расхождения схемы FTS снимка с текущим бинарём.
+  try {
+    await getIt<AppDatabase>().rebuildFts();
+  } catch (_) {/* поиск восстановится со следующей правки */}
+
+  // Snapshot-безопасности больше не нужен (restore удался) — убираем, чтобы он
+  // не копился и не мешал VACUUM INTO следующего restore.
+  if (safety.existsSync()) {
+    try {
+      safety.deleteSync();
+    } catch (_) {/* не критично */}
+  }
 }

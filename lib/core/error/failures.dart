@@ -42,3 +42,8 @@ class ImageDecodeFailure extends Failure {
 class ImageTooLargeFailure extends Failure {
   const ImageTooLargeFailure([super.message = 'Файл слишком большой']);
 }
+
+class TagNameTakenFailure extends Failure {
+  const TagNameTakenFailure(
+      [super.message = 'Тег с таким именем уже существует']);
+}

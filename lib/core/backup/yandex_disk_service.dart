@@ -88,7 +88,13 @@ class YandexDiskService {
       }
     });
 
-    await launchUrl(url, mode: LaunchMode.externalApplication);
+    try {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // Браузер не открылся — отменяем подписку (иначе утечка) и пробрасываем.
+      await sub.cancel();
+      rethrow;
+    }
 
     return completer.future.timeout(
       const Duration(minutes: 5),

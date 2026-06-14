@@ -94,4 +94,53 @@ void main() {
     });
     expect(items.map((e) => e.title), contains('Тестовая карточка'));
   });
+
+  testWidgets('системный «назад» при несохранённом вводе спрашивает подтверждение',
+      (tester) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => context.push('/editor'),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/editor',
+          builder: (context, state) => const MediaEditorPage(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(
+      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
+      routerConfig: router,
+    ));
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Черновик');
+    await tester.pump();
+
+    // Системный «назад»: PopScope перехватывает при несохранённом вводе и
+    // показывает то же подтверждение, что крестик (раньше back терял ввод молча).
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Отменить создание?'), findsOneWidget);
+
+    // «Продолжить» — остаёмся в редакторе, ввод на месте.
+    await tester.tap(find.text('Продолжить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Отменить создание?'), findsNothing);
+    expect(find.text('Новая карточка'), findsOneWidget);
+
+    // Размонтируем дерево и даём Drift-подписке тегов закрыться (иначе
+    // «pending timer» — редактор остаётся смонтированным с активным watch).
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
 }

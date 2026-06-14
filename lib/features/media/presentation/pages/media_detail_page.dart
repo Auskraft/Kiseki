@@ -88,7 +88,8 @@ class _DetailView extends StatelessWidget {
   Future<void> _delete(BuildContext context) async {
     final router = GoRouter.of(context);
     await context.read<MediaDetailCubit>().softDelete();
-    router.pop();
+    // canPop-гард: быстрый двойной тап не должен снять ещё и экран под деталью.
+    if (router.canPop()) router.pop();
   }
 
   @override
@@ -312,7 +313,9 @@ class _MoreButton extends StatelessWidget {
             context.push(AppRoute.edit(entry.id));
           } else if (v == 'trash') {
             final router = GoRouter.of(context);
-            cubit.softDelete().then((_) => router.pop());
+            cubit.softDelete().then((_) {
+              if (router.canPop()) router.pop();
+            });
           }
         },
         itemBuilder: (_) => const [

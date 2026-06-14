@@ -32,12 +32,21 @@ class _RestartWidgetState extends State<RestartWidget>
     setState(() => _busy = true);
     // Кадр на demount дерева — отменить .watch-подписки ДО закрытия БД.
     await Future<void>.delayed(const Duration(milliseconds: 60));
-    await swap();
-    if (!mounted) return;
-    setState(() {
-      _busy = false;
-      _key = UniqueKey();
-    });
+    try {
+      await swap();
+    } finally {
+      // ВСЕГДА снимаем _busy и перемонтируем дерево с новым ключом — даже если
+      // swap бросил на полпути. Иначе исключение оставляло приложение на вечном
+      // спиннере с закрытой БД. На успехе → свежая (восстановленная) БД; на
+      // сбое → AppBootstrap заново прогонит checkIntegrity и покажет экран
+      // восстановления. Исключение swap после finally пробрасывается вызывающему.
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _key = UniqueKey();
+        });
+      }
+    }
   }
 
   @override

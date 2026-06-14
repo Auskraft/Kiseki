@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart' show SqliteException;
 
 import '../../features/media/data/media_converters.dart';
+import '../error/failures.dart';
 import '../../features/media/data/tables/media_items.dart';
 import '../../features/media/domain/media_format.dart';
 import '../../features/media/domain/media_type.dart';
@@ -20,6 +24,9 @@ part 'app_database.g.dart';
 /// Имя файла БД в каталоге приложения (рядом с `media/`, §7.2).
 /// Используется и при открытии, и при restore (подмена файла).
 const String kDbFileName = 'kiseki.sqlite';
+
+/// SQLITE_FULL — диск/БД переполнены (primary result code, см. sqlite.org/rescode).
+const int _sqliteFull = 13;
 
 /// Корневая БД приложения (Drift поверх SQLite).
 ///
@@ -72,8 +79,20 @@ class AppDatabase extends _$AppDatabase {
   /// Транзакционно-консистентный снимок БД в файл [path] (для бэкапа, §8.1).
   /// `VACUUM INTO` корректно учитывает WAL и не требует остановки записи.
   Future<void> snapshotInto(String path) async {
+    // VACUUM INTO требует НЕсуществующий целевой файл — иначе SQLite падает.
+    // Safety-снимок пишется по фиксированному пути, так что без этой очистки
+    // повторный restore в одной сессии валил бы снимок (молча).
+    final target = File(path);
+    if (target.existsSync()) target.deleteSync();
     final escaped = path.replaceAll("'", "''");
-    await customStatement("VACUUM INTO '$escaped'");
+    try {
+      await customStatement("VACUUM INTO '$escaped'");
+    } on SqliteException catch (e) {
+      // VACUUM при полном диске бросает SQLITE_FULL (не FileSystemException) —
+      // даём типизированную ошибку, иначе бэкап показывал бы общий текст.
+      if (e.resultCode == _sqliteFull) throw const StorageFullFailure();
+      rethrow;
+    }
     // VACUUM может сбросить user_version — проставляем явно, иначе при открытии
     // снимка Drift примет его за новую БД и запустит onCreate (createAll упадёт).
     await customStatement("ATTACH DATABASE '$escaped' AS _snap");

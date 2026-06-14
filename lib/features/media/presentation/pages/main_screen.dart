@@ -281,6 +281,9 @@ class _SearchBarState extends State<_SearchBar> {
       // Внешняя смена запроса (сброс фильтров) синхронизирует поле.
       listenWhen: (a, b) => a.query.text != b.query.text,
       listener: (context, state) {
+        // Отменяем висящий дебаунс: иначе таймер с устаревшим текстом сработал
+        // бы после сброса и молча вернул бы поиск (#17).
+        _debounce?.cancel();
         final text = state.query.text ?? '';
         if (_controller.text != text) {
           _controller.text = text;

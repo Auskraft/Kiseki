@@ -40,22 +40,28 @@ class UnpackedBackup {
     required File dbFile,
     required Directory mediaRoot,
   }) async {
-    await snapshot.copy(dbFile.path);
-    for (final ext in const ['-wal', '-shm']) {
-      final f = File('${dbFile.path}$ext');
-      if (f.existsSync()) await f.delete();
-    }
-
-    final media = Directory(p.join(mediaRoot.path, 'media'));
-    if (media.existsSync()) await media.delete(recursive: true);
-    for (final sub in const ['full', 'thumb']) {
-      final src = Directory(p.join(dir.path, 'images', sub));
-      if (!src.existsSync()) continue;
-      final dst = Directory(p.join(media.path, sub))
-        ..createSync(recursive: true);
-      for (final f in src.listSync().whereType<File>()) {
-        await f.copy(p.join(dst.path, p.basename(f.path)));
+    try {
+      await snapshot.copy(dbFile.path);
+      for (final ext in const ['-wal', '-shm']) {
+        final f = File('${dbFile.path}$ext');
+        if (f.existsSync()) await f.delete();
       }
+
+      final media = Directory(p.join(mediaRoot.path, 'media'));
+      if (media.existsSync()) await media.delete(recursive: true);
+      for (final sub in const ['full', 'thumb']) {
+        final src = Directory(p.join(dir.path, 'images', sub));
+        if (!src.existsSync()) continue;
+        final dst = Directory(p.join(media.path, sub))
+          ..createSync(recursive: true);
+        for (final f in src.listSync().whereType<File>()) {
+          await f.copy(p.join(dst.path, p.basename(f.path)));
+        }
+      }
+    } on FileSystemException catch (e) {
+      // Нет места при копировании снимка/картинок → понятный текст (как pack/unpack).
+      if (e.osError?.errorCode == _enospc) throw const StorageFullFailure();
+      rethrow;
     }
   }
 

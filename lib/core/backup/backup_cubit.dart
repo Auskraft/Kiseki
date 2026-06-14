@@ -68,6 +68,7 @@ class BackupCubit extends Cubit<BackupState> {
       return;
     }
     final name = await _disk.getDisplayName();
+    if (isClosed) return;
     emit(BackupState(
       linked: true,
       account: name,
@@ -79,15 +80,19 @@ class BackupCubit extends Cubit<BackupState> {
     emit(state.copyWith(busy: true));
     try {
       final ok = await _disk.loginWithBrowser();
+      if (isClosed) return;
       if (ok) {
         final name = await _disk.getDisplayName(forceRefresh: true);
+        if (isClosed) return;
         emit(BackupState(linked: true, account: name));
       } else {
         emit(state.copyWith(busy: false));
       }
     } on Failure catch (e) {
+      if (isClosed) return;
       emit(state.copyWith(busy: false, error: e.message));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(busy: false, error: 'Не удалось подключить Я.Диск'));
     }
   }
@@ -103,6 +108,7 @@ class BackupCubit extends Cubit<BackupState> {
     try {
       final bytes = await _archive.pack();
       await _disk.uploadBackup(bytes);
+      if (isClosed) return;
       emit(state.copyWith(
         busy: false,
         lastBackup: _disk.lastBackupTime(),
@@ -110,8 +116,10 @@ class BackupCubit extends Cubit<BackupState> {
       ));
     } on Failure catch (e) {
       // Сеть / переавторизация / нет места — конкретное действие в тексте.
+      if (isClosed) return;
       emit(state.copyWith(busy: false, error: e.message));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(busy: false, error: 'Не удалось сделать бэкап'));
     }
   }

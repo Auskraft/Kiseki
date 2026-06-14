@@ -82,31 +82,34 @@ class _EditorFormState extends State<_EditorForm> {
     super.dispose();
   }
 
+  /// Подтверждение отмены: диалог только при создании с непустым вводом.
+  /// Возвращает true, если можно уходить (терять нечего или подтвердили).
+  /// Общий путь для крестика и системного «назад» (PopScope).
+  Future<bool> _confirmDiscard() async {
+    final s = context.read<MediaEditorCubit>().state;
+    if (!(s.mode == EditorMode.create && s.title.trim().isNotEmpty)) return true;
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Отменить создание?'),
+        content: const Text('Введённые данные не сохранятся.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Продолжить'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Отменить'),
+          ),
+        ],
+      ),
+    );
+    return discard == true;
+  }
+
   Future<void> _close() async {
-    final cubit = context.read<MediaEditorCubit>();
-    final s = cubit.state;
-    // Спрашиваем подтверждение только при создании с непустым вводом.
-    if (s.mode == EditorMode.create && s.title.trim().isNotEmpty) {
-      final discard = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Отменить создание?'),
-          content: const Text('Введённые данные не сохранятся.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Продолжить'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Отменить'),
-            ),
-          ],
-        ),
-      );
-      if (discard != true) return;
-    }
-    if (mounted) context.pop();
+    if (await _confirmDiscard() && mounted) context.pop();
   }
 
   Future<void> _pickCover(BuildContext context) async {
@@ -178,50 +181,64 @@ class _EditorFormState extends State<_EditorForm> {
       },
       builder: (context, state) {
         final cubit = context.read<MediaEditorCubit>();
-        return Scaffold(
-          body: SafeArea(
-            child: Column(
-              children: [
-                _TopBar(
-                  title: state.mode == EditorMode.create
-                      ? 'Новая карточка'
-                      : 'Редактирование',
-                  canSave: state.canSave,
-                  saving: state.saving,
-                  onClose: _close,
-                  onSave: cubit.save,
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 36),
-                    children: [
-                      _required(context, state, cubit),
-                      const _GroupGap(),
-                      const Divider(height: 1),
-                      const _GroupGap(),
-                      _main(context, state, cubit),
-                      _conditional(
-                        visible: state.isEpisodic,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 18),
-                          child: _ProgressBlock(state: state, cubit: cubit),
-                        ),
-                      ),
-                      _conditional(
-                        visible: state.showReason,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 18),
-                          child: _ReasonBlock(state: state, cubit: cubit),
-                        ),
-                      ),
-                      const _GroupGap(),
-                      _dates(context, state, cubit),
-                      const _GroupGap(),
-                      _noteField(context, cubit),
-                    ],
+        // Системный «назад» при несохранённом вводе спрашивает то же
+        // подтверждение, что и крестик. canPop гейтит ТОЛЬКО системный pop;
+        // программный context.pop() (крестик/justSaved) безусловен и проходит.
+        final guardUnsaved = state.mode == EditorMode.create &&
+            state.title.trim().isNotEmpty &&
+            !state.justSaved &&
+            !state.saving;
+        return PopScope(
+          canPop: !guardUnsaved,
+          onPopInvokedWithResult: (didPop, _) async {
+            if (didPop) return;
+            if (await _confirmDiscard() && context.mounted) context.pop();
+          },
+          child: Scaffold(
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _TopBar(
+                    title: state.mode == EditorMode.create
+                        ? 'Новая карточка'
+                        : 'Редактирование',
+                    canSave: state.canSave,
+                    saving: state.saving,
+                    onClose: _close,
+                    onSave: cubit.save,
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 36),
+                      children: [
+                        _required(context, state, cubit),
+                        const _GroupGap(),
+                        const Divider(height: 1),
+                        const _GroupGap(),
+                        _main(context, state, cubit),
+                        _conditional(
+                          visible: state.isEpisodic,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 18),
+                            child: _ProgressBlock(state: state, cubit: cubit),
+                          ),
+                        ),
+                        _conditional(
+                          visible: state.showReason,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 18),
+                            child: _ReasonBlock(state: state, cubit: cubit),
+                          ),
+                        ),
+                        const _GroupGap(),
+                        _dates(context, state, cubit),
+                        const _GroupGap(),
+                        _noteField(context, cubit),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

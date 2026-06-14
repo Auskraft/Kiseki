@@ -38,7 +38,14 @@ class _AppBootstrapState extends State<AppBootstrap> {
   }
 
   Future<void> _run() async {
-    final ok = await getIt<AppDatabase>().checkIntegrity();
+    // try/catch и вокруг getIt<AppDatabase>(): если reconfigure после неудачного
+    // restore не поднял БД/DI, не зависаем на сплеше — показываем восстановление.
+    bool ok;
+    try {
+      ok = await getIt<AppDatabase>().checkIntegrity();
+    } catch (_) {
+      ok = false;
+    }
     if (!ok) {
       if (mounted) setState(() => _status = _Boot.corrupted);
       return;

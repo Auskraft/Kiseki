@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../database/app_database.dart';
+import '../error/failures.dart';
 import 'tag.dart';
 import 'tag_name.dart';
 import 'tag_repository.dart';
@@ -85,10 +86,20 @@ class TagRepositoryImpl implements TagRepository {
   @override
   Future<void> rename(String id, String newName) async {
     final trimmed = newName.trim();
+    final normalized = normalizeTagName(trimmed);
+    // UNIQUE(name_normalized) (ux_tags_name_norm): если имя уже носит ДРУГОЙ
+    // тег, сырой UPDATE кинул бы SqliteException. Превращаем коллизию в
+    // типизированный Failure (его ловит UI). Совпадение с самим собой —
+    // не коллизия: смена регистра/пробелов того же тега допустима.
+    final clash = await (_db.select(_db.tags)
+          ..where((t) => t.nameNormalized.equals(normalized) & t.id.equals(id).not()))
+        .getSingleOrNull();
+    if (clash != null) throw const TagNameTakenFailure();
+
     await (_db.update(_db.tags)..where((t) => t.id.equals(id))).write(
       TagsCompanion(
         name: Value(trimmed),
-        nameNormalized: Value(normalizeTagName(trimmed)),
+        nameNormalized: Value(normalized),
       ),
     );
   }
