@@ -144,12 +144,89 @@ const _sunsetDark = _Palette(
   secondary: Color(0xFFE8897C), outline: Color(0xFF3C2C20), outlineSoft: Color(0xFF2A1F17),
 );
 
-const Map<KisekiThemeId, ({_Palette light, _Palette dark})> _palettes = {
+/// Выводит полную палитру (14 поверхностей) из акцента [primary] + [secondary]
+/// для (дополнительных) тем — чтобы добавлять темы дёшево, без ручной настройки
+/// каждой поверхности. Базовые 5 тем хэндоффа заданы вручную выше и через
+/// `_derive` НЕ проходят. Светлые/тёмные ступени и контуры тонируются в тон
+/// акцента (HSL), контраст onPrimary берётся по яркости акцента.
+_Palette _derive(Color primary, Color secondary, Brightness b) {
+  final hp = HSLColor.fromColor(primary);
+  final h = hp.hue;
+  final s = hp.saturation;
+  Color c(double sat, double light) =>
+      HSLColor.fromAHSL(1, h, sat.clamp(0.0, 1.0), light.clamp(0.0, 1.0))
+          .toColor();
+  final onP = ThemeData.estimateBrightnessForColor(primary) == Brightness.dark
+      ? const Color(0xFFFFFFFF)
+      : const Color(0xFF201A17);
+
+  if (b == Brightness.light) {
+    return _Palette(
+      bg: c(s * 0.5, 0.955),
+      surface: c(s * 0.34, 0.978),
+      surface2: const Color(0xFFFFFFFF),
+      surface3: c(s * 0.45, 0.915),
+      onBg: c(0.26, 0.13),
+      onMuted: c(0.15, 0.40),
+      onFaint: c(0.13, 0.60),
+      primary: primary,
+      onPrimary: onP,
+      primaryContainer: c(s * 0.55, 0.88),
+      onPrimaryContainer: c(0.55, 0.20),
+      secondary: secondary,
+      outline: c(0.16, 0.84),
+      outlineSoft: c(0.14, 0.905),
+    );
+  }
+  final darkPrimary = hp
+      .withLightness((hp.lightness + 0.12).clamp(0.0, 0.72))
+      .withSaturation((hp.saturation * 0.95).clamp(0.0, 1.0))
+      .toColor();
+  final hs = HSLColor.fromColor(secondary);
+  final darkSecondary =
+      hs.withLightness((hs.lightness + 0.12).clamp(0.0, 0.74)).toColor();
+  final onDP =
+      ThemeData.estimateBrightnessForColor(darkPrimary) == Brightness.dark
+          ? const Color(0xFFFFFFFF)
+          : c(0.6, 0.12);
+  return _Palette(
+    bg: c(0.30, 0.065),
+    surface: c(0.26, 0.105),
+    surface2: c(0.24, 0.135),
+    surface3: c(0.21, 0.17),
+    onBg: c(0.14, 0.92),
+    onMuted: c(0.13, 0.69),
+    onFaint: c(0.12, 0.47),
+    primary: darkPrimary,
+    onPrimary: onDP,
+    primaryContainer: c(0.40, 0.26),
+    onPrimaryContainer: c(0.45, 0.86),
+    secondary: darkSecondary,
+    outline: c(0.17, 0.24),
+    outlineSoft: c(0.19, 0.155),
+  );
+}
+
+({_Palette light, _Palette dark}) _seed(Color primary, Color secondary) => (
+      light: _derive(primary, secondary, Brightness.light),
+      dark: _derive(primary, secondary, Brightness.dark),
+    );
+
+final Map<KisekiThemeId, ({_Palette light, _Palette dark})> _palettes = {
   KisekiThemeId.base: (light: _baseLight, dark: _baseDark),
   KisekiThemeId.sakura: (light: _sakuraLight, dark: _sakuraDark),
   KisekiThemeId.matcha: (light: _matchaLight, dark: _matchaDark),
   KisekiThemeId.midnight: (light: _midnightLight, dark: _midnightDark),
   KisekiThemeId.sunset: (light: _sunsetLight, dark: _sunsetDark),
+  // Дополнительные темы (выведены из акцента; вдохновлены палитрой «дневника
+  // давления»). Тонкая ручная доводка — по визуальной проверке владельца.
+  KisekiThemeId.ocean: _seed(const Color(0xFF0E8C8C), const Color(0xFF3B73C4)),
+  KisekiThemeId.lavender:
+      _seed(const Color(0xFF8B5CF6), const Color(0xFFB07FD8)),
+  KisekiThemeId.cherry: _seed(const Color(0xFFCB3A57), const Color(0xFFA8557A)),
+  KisekiThemeId.amber: _seed(const Color(0xFFC8941A), const Color(0xFFB5654A)),
+  KisekiThemeId.sky: _seed(const Color(0xFF2E90D9), const Color(0xFF4FB0A8)),
+  KisekiThemeId.ink: _seed(const Color(0xFF566079), const Color(0xFF6E7A94)),
 };
 
 /// Семантические токены для (тема, режим).

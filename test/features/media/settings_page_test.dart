@@ -57,11 +57,8 @@ void main() {
 
     expect(find.text('Настройки'), findsOneWidget);
     expect(find.text('Подключить Я.Диск'), findsOneWidget);
-
-    // Смена темы свотчем отражается в ThemeCubit.
-    expect(themeCubit.state.themeId, KisekiThemeId.base);
-    await tester.tap(find.text('Сакура'));
-    await tester.pump();
-    expect(themeCubit.state.themeId, KisekiThemeId.sakura);
+    // Свотчи темы переехали в отдельный пикер — здесь строки-входы.
+    expect(find.text('Тема оформления'), findsOneWidget);
+    expect(find.text('Стиль навигации'), findsOneWidget);
   });
 }

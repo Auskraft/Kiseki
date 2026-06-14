@@ -13,8 +13,6 @@ import '../../../../core/backup/yandex_disk_service.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/ui/confirm_sheet.dart';
-import '../../../../core/theme/kiseki_theme_id.dart';
-import '../../../../core/theme/kiseki_themes.dart';
 import '../../../../core/nav/nav_style.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/theme/theme_cubit.dart';
@@ -43,8 +41,6 @@ class SettingsPage extends StatelessWidget {
                   _BackupSection(),
                   SizedBox(height: 20),
                   _SectionTitle('Визуальный стиль'),
-                  _AppearanceCard(),
-                  SizedBox(height: 10),
                   _VisualStyleCard(),
                   SizedBox(height: 20),
                   _SectionTitle('Каталог'),
@@ -384,101 +380,24 @@ class _RestoreButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── внешний вид ─────────────────────────────────
-
-class _AppearanceCard extends StatelessWidget {
-  const _AppearanceCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final state = context.watch<ThemeCubit>().state;
-    final cubit = context.read<ThemeCubit>();
-    return _Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Тема', style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 16,
-            runSpacing: 12,
-            children: [
-              for (final id in KisekiThemeId.values)
-                _Swatch(
-                  id: id,
-                  selected: state.themeId == id,
-                  onTap: () => cubit.setTheme(id),
-                ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text('Режим', style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: 10),
-          SegmentedButton<ThemeMode>(
-            segments: const [
-              ButtonSegment(value: ThemeMode.light, label: Text('Светлая')),
-              ButtonSegment(value: ThemeMode.dark, label: Text('Тёмная')),
-              ButtonSegment(value: ThemeMode.system, label: Text('Авто')),
-            ],
-            selected: {state.themeMode},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => cubit.setMode(s.first),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Swatch extends StatelessWidget {
-  const _Swatch({required this.id, required this.selected, required this.onTap});
-
-  final KisekiThemeId id;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final tk = context.tokens;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: EdgeInsets.all(selected ? 3 : 0),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: selected ? Border.all(color: tk.onBg, width: 2) : null,
-            ),
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: themeSwatch(id),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(id.label, style: Theme.of(context).textTheme.labelSmall),
-        ],
-      ),
-    );
-  }
-}
-
-/// Строка «Стиль навигации» → пикер (показывает текущий стиль в трейлинге).
+/// Карточка «Визуальный стиль»: тема оформления, стиль навигации, иконки меню.
 class _VisualStyleCard extends StatelessWidget {
   const _VisualStyleCard();
 
   @override
   Widget build(BuildContext context) {
+    final themeId = context.watch<ThemeCubit>().state.themeId;
     final navStyle = context.watch<NavStyleCubit>().state.style;
     return _Card(
       child: Column(
         children: [
+          _Row(
+            icon: Icons.palette_outlined,
+            title: 'Тема оформления',
+            trailing: themeId.label,
+            onTap: () => context.push(AppRoute.theme),
+          ),
+          const _Divider(),
           _Row(
             icon: Icons.dashboard_rounded,
             title: 'Стиль навигации',

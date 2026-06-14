@@ -1,11 +1,18 @@
 /// Набор тем (у каждой — режим light/dark). Расширяется добавлением значения
-/// + палитры в [kiseki_themes.dart]. Хэндофф: 5 тем.
+/// + палитры в [kiseki_themes.dart]. 5 тем хэндоффа заданы вручную, остальные
+/// выведены из акцента через `_derive`.
 enum KisekiThemeId {
   base('Kiseki'),
   sakura('Сакура'),
   matcha('Матча'),
   midnight('Полночь'),
-  sunset('Закат');
+  sunset('Закат'),
+  ocean('Океан'),
+  lavender('Лаванда'),
+  cherry('Вишня'),
+  amber('Янтарь'),
+  sky('Небо'),
+  ink('Графит');
 
   const KisekiThemeId(this.label);
 
