@@ -15,6 +15,7 @@ import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/ui/confirm_sheet.dart';
 import '../../../../core/theme/kiseki_theme_id.dart';
 import '../../../../core/theme/kiseki_themes.dart';
+import '../../../../core/nav/nav_style.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/theme/theme_cubit.dart';
 
@@ -38,8 +39,10 @@ class SettingsPage extends StatelessWidget {
                   _SectionTitle('Резервная копия'),
                   _BackupSection(),
                   SizedBox(height: 20),
-                  _SectionTitle('Внешний вид'),
+                  _SectionTitle('Визуальный стиль'),
                   _AppearanceCard(),
+                  SizedBox(height: 10),
+                  _VisualStyleCard(),
                   SizedBox(height: 20),
                   _SectionTitle('Каталог'),
                   _CatalogCard(),
@@ -87,7 +90,7 @@ class _SectionTitle extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 0, 4, 9),
       child: Text(
-        text.toUpperCase(),
+        text,
         style: TextStyle(
           fontSize: 11.5 * uiScale,
           fontWeight: FontWeight.w700,
@@ -451,6 +454,24 @@ class _Swatch extends StatelessWidget {
           const SizedBox(height: 6),
           Text(id.label, style: Theme.of(context).textTheme.labelSmall),
         ],
+      ),
+    );
+  }
+}
+
+/// Строка «Стиль навигации» → пикер (показывает текущий стиль в трейлинге).
+class _VisualStyleCard extends StatelessWidget {
+  const _VisualStyleCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final navStyle = context.watch<NavStyleCubit>().state.style;
+    return _Card(
+      child: _Row(
+        icon: Icons.dashboard_rounded,
+        title: 'Стиль навигации',
+        trailing: navStyle.title,
+        onTap: () => context.push(AppRoute.navStyle),
       ),
     );
   }

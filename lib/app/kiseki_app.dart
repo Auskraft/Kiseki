@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/theme/app_dimens.dart';
 import '../core/theme/kiseki_themes.dart';
 import '../core/theme/theme_cubit.dart';
+import '../core/nav/nav_style.dart';
 import '../features/media/domain/media_repository.dart';
 import '../features/media/presentation/cubit/media_list_cubit.dart';
 import '../l10n/app_localizations.dart';
@@ -33,6 +34,7 @@ class _KisekiAppState extends State<KisekiApp> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => ThemeCubit(getIt<SharedPreferences>())),
+        BlocProvider(create: (_) => NavStyleCubit(getIt<SharedPreferences>())),
         BlocProvider(create: (_) => MediaListCubit(getIt<MediaRepository>())),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(

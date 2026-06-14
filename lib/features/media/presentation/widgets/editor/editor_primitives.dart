@@ -44,7 +44,7 @@ class EditorSectionHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            label.toUpperCase(),
+            label,
             style: TextStyle(
               fontSize: 12 * uiScale,
               fontWeight: FontWeight.w700,
