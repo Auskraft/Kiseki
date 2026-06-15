@@ -95,7 +95,9 @@ class MediaEditorState extends Equatable {
   final int rewatchCount;
 
   final Set<String> selectedTagIds;
-  final List<Tag> allTags;
+
+  /// Все теги справочника + число живых карточек (для популярных чипов).
+  final List<TagWithCount> allTags;
 
   /// UUID обложки (файлы уже сохранены) или `null`.
   final String? coverImageId;
@@ -157,7 +159,7 @@ class MediaEditorState extends Equatable {
     bool? isFavorite,
     int? rewatchCount,
     Set<String>? selectedTagIds,
-    List<Tag>? allTags,
+    List<TagWithCount>? allTags,
     ValueGetter<String?>? coverImageId,
     bool? processingImage,
     bool? loading,
@@ -250,7 +252,7 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
           entryId: entryId,
           loading: entryId != null,
         )) {
-    _tagsSub = _tags.watchAll().listen(
+    _tagsSub = _tags.watchAllWithCounts().listen(
           (tags) => emit(state.copyWith(allTags: tags)),
         );
     if (entryId != null) _load(entryId);
@@ -259,7 +261,7 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
   final MediaRepository _repo;
   final TagRepository _tags;
   final ImageStorage _images;
-  late final StreamSubscription<List<Tag>> _tagsSub;
+  late final StreamSubscription<List<TagWithCount>> _tagsSub;
 
   /// Обложка, лежащая в БД на момент загрузки (для очистки файлов при замене).
   String? _loadedCoverId;
