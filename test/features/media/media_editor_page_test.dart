@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kiseki/app/di/injector.dart';
 import 'package:kiseki/core/catalog/tag_repository.dart';
@@ -14,10 +13,10 @@ import 'package:kiseki/core/images/image_storage.dart';
 import 'package:kiseki/core/images/media_paths.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
 import 'package:kiseki/core/theme/kiseki_themes.dart';
-import 'package:kiseki/features/media/data/media_repository_impl.dart';
 import 'package:kiseki/features/media/domain/media_entry.dart';
 import 'package:kiseki/features/media/domain/media_query.dart';
 import 'package:kiseki/features/media/domain/media_repository.dart';
+import 'package:kiseki/features/media/data/media_repository_impl.dart';
 import 'package:kiseki/features/media/presentation/pages/media_editor_page.dart';
 
 void main() {
@@ -40,47 +39,50 @@ void main() {
     if (tmpRoot.existsSync()) tmpRoot.deleteSync(recursive: true);
   });
 
-  testWidgets('форма создаёт карточку и возвращается назад', (tester) async {
-    final router = GoRouter(
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => Scaffold(
-            body: Center(
+  // Хост с кнопкой, открывающей редактор как модальный боттом-шит.
+  Widget host() => MaterialApp(
+        theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Center(
               child: ElevatedButton(
-                onPressed: () => context.push('/editor'),
+                onPressed: () => openMediaEditor(context),
                 child: const Text('open'),
               ),
             ),
           ),
         ),
-        GoRoute(
-          path: '/editor',
-          builder: (context, state) => const MediaEditorPage(),
-        ),
-      ],
-    );
-    await tester.pumpWidget(MaterialApp.router(
-      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
-      routerConfig: router,
-    ));
+      );
 
+  testWidgets('шит раскрывается прогрессивно и создаёт карточку',
+      (tester) async {
+    await tester.pumpWidget(host());
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     expect(find.text('Новая карточка'), findsOneWidget);
 
-    // Кнопка сохранения неактивна без названия — карточка не создаётся.
-    await tester.tap(find.text('Сохранить'));
-    await tester.pumpAndSettle();
-    expect(find.text('Новая карточка'), findsOneWidget);
+    // Тип скрыт, пока не выбран формат; название — пока не выбран тип.
+    expect(find.text('Тип'), findsNothing);
+    expect(find.text('Название'), findsNothing);
 
+    // Формат → появляется «Тип».
+    await tester.tap(find.text('Одиночный'));
+    await tester.pumpAndSettle();
+    expect(find.text('Тип'), findsOneWidget);
+    expect(find.text('Название'), findsNothing);
+
+    // Вид → появляется «Название».
+    await tester.tap(find.text('Фильм'));
+    await tester.pumpAndSettle();
+    expect(find.text('Название'), findsWidgets);
+
+    // Вводим название и сохраняем иконкой-галочкой.
     await tester.enterText(find.byType(TextField).first, 'Тестовая карточка');
     await tester.pump();
-    await tester.tap(find.text('Сохранить'));
+    await tester.tap(find.byKey(const Key('editor-save')));
     await tester.pumpAndSettle();
 
-    // Возврат на стартовый экран = justSaved (карточка успешно создана).
-    expect(find.text('open'), findsOneWidget);
+    // Шит закрылся (justSaved → Navigator.pop).
     expect(find.text('Новая карточка'), findsNothing);
 
     // Дать Drift-стримам закрытого редактора отработать (иначе «pending timer»).
@@ -88,46 +90,27 @@ void main() {
 
     var items = <MediaEntry>[];
     await tester.runAsync(() async {
-      items = await getIt<MediaRepository>()
-          .watch(const MediaListQuery())
-          .first;
+      items =
+          await getIt<MediaRepository>().watch(const MediaListQuery()).first;
     });
     expect(items.map((e) => e.title), contains('Тестовая карточка'));
   });
 
-  testWidgets('системный «назад» при несохранённом вводе спрашивает подтверждение',
+  testWidgets('несохранённый ввод спрашивает подтверждение при закрытии',
       (tester) async {
-    final router = GoRouter(
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => Scaffold(
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () => context.push('/editor'),
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
-        GoRoute(
-          path: '/editor',
-          builder: (context, state) => const MediaEditorPage(),
-        ),
-      ],
-    );
-    await tester.pumpWidget(MaterialApp.router(
-      theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),
-      routerConfig: router,
-    ));
-
+    await tester.pumpWidget(host());
     await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Одиночный'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Фильм'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'Черновик');
     await tester.pump();
 
-    // Системный «назад»: PopScope перехватывает при несохранённом вводе и
-    // показывает то же подтверждение, что крестик (раньше back терял ввод молча).
+    // Закрытие (свайп вниз / системный «назад») при несохранённом вводе →
+    // PopScope перехватывает и показывает подтверждение.
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('Отменить создание?'), findsOneWidget);

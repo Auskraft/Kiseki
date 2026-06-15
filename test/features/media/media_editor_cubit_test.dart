@@ -64,6 +64,7 @@ void main() {
     final cubit = create();
     addTearDown(cubit.close);
 
+    cubit.setFormat(MediaFormat.single);
     cubit.setMediaType(MediaType.movie);
     cubit.setTitle('Властелин колец');
     cubit.setRating(95);
@@ -79,19 +80,25 @@ void main() {
     expect(e.year, 2001);
   });
 
-  test('canSave требует непустое название', () async {
+  test('canSave требует формат, тип и непустое название', () async {
     final cubit = create();
     addTearDown(cubit.close);
     expect(cubit.state.canSave, isFalse);
-    cubit.setTitle('  ');
-    expect(cubit.state.canSave, isFalse);
     cubit.setTitle('Дюна');
+    expect(cubit.state.canSave, isFalse, reason: 'нет формата и типа');
+    cubit.setFormat(MediaFormat.single);
+    expect(cubit.state.canSave, isFalse, reason: 'нет типа');
+    cubit.setMediaType(MediaType.movie);
     expect(cubit.state.canSave, isTrue);
+    cubit.setTitle('  ');
+    expect(cubit.state.canSave, isFalse, reason: 'пустое название');
   });
 
   test('attachCover сохраняет обложку и пишет её в карточку', () async {
     final cubit = create();
     addTearDown(cubit.close);
+    cubit.setFormat(MediaFormat.single);
+    cubit.setMediaType(MediaType.movie);
     cubit.setTitle('С обложкой');
 
     final src = File(p.join(tmpRoot.path, 'src.jpg'))
@@ -122,22 +129,24 @@ void main() {
   test('формат выбирается независимо от вида (ADR-07)', () {
     final cubit = create();
     addTearDown(cubit.close);
-    expect(cubit.state.format, MediaFormat.single); // дефолт
-    // Смена вида НЕ трогает формат:
+    expect(cubit.state.format, isNull); // ничего не выбрано
+    expect(cubit.state.mediaType, isNull);
+    // Смена вида НЕ выставляет формат:
     cubit.setMediaType(MediaType.drama);
-    expect(cubit.state.format, MediaFormat.single);
-    // Формат переключается явно:
+    expect(cubit.state.format, isNull, reason: 'вид не задаёт формат');
+    // Формат выбирается явно:
     cubit.setFormat(MediaFormat.episodic);
     expect(cubit.state.format, MediaFormat.episodic);
     cubit.setMediaType(MediaType.anime);
     expect(cubit.state.format, MediaFormat.episodic,
-        reason: 'тип не сбрасывает формат');
+        reason: 'смена вида не сбрасывает формат');
   });
 
   test('серия без сезона нормализуется к S1 (CHECK)', () async {
     final cubit = create();
     addTearDown(cubit.close);
     cubit.setFormat(MediaFormat.episodic);
+    cubit.setMediaType(MediaType.movie);
     cubit.setTitle('Лост');
     cubit.setCurrentEpisode(9);
     await cubit.save();
@@ -151,6 +160,7 @@ void main() {
     final cubit = create();
     addTearDown(cubit.close);
     cubit.setFormat(MediaFormat.episodic); // сначала серийный
+    cubit.setMediaType(MediaType.anime);
     cubit.setTitle('Аниме-фильм');
     cubit.setCurrentSeason(2);
     cubit.setCurrentEpisode(5);
@@ -168,6 +178,8 @@ void main() {
   test('причина снимается вне паузы/заброса', () async {
     final cubit = create();
     addTearDown(cubit.close);
+    cubit.setFormat(MediaFormat.episodic);
+    cubit.setMediaType(MediaType.drama);
     cubit.setTitle('Эйфория');
     cubit.setStatus(WatchStatus.paused);
     cubit.setUnfinishedReason(UnfinishedReason.noTime);
@@ -194,6 +206,7 @@ void main() {
     addTearDown(cubit.close);
     cubit.setTitle('Сериал');
     cubit.setFormat(MediaFormat.episodic);
+    cubit.setMediaType(MediaType.movie);
     cubit.setStatus(WatchStatus.dropped);
     cubit.setUnfinishedReason(UnfinishedReason.notForMe);
     await cubit.save();
@@ -203,6 +216,8 @@ void main() {
   test('addTag создаёт тег, выбирает его и пишет в карточку', () async {
     final cubit = create();
     addTearDown(cubit.close);
+    cubit.setFormat(MediaFormat.single);
+    cubit.setMediaType(MediaType.movie);
     cubit.setTitle('С тегом');
     await cubit.addTag('Драма');
     expect(cubit.state.selectedTagIds, hasLength(1));

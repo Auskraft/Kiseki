@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../app/di/injector.dart';
@@ -23,12 +22,27 @@ import '../widgets/editor/editor_primitives.dart';
 import '../widgets/editor/rating_input.dart';
 import '../widgets/editor/tag_editor.dart';
 
-/// Экран 03 — создание/редактирование карточки медиа (прогрессивное раскрытие).
-/// Открывается через go_router: `/editor` (создание) или `/item/<id>/edit`.
-class MediaEditorPage extends StatelessWidget {
-  const MediaEditorPage({super.key, this.entryId});
+/// Открывает редактор карточки (экран 03) как модальный боттом-шит.
+/// `entryId == null` — создание, иначе редактирование существующей карточки.
+///
+/// ADR-20: модалки — через `showModalBottomSheet` + `Navigator.pop` (не
+/// go_router-роут). Крестика в шапке нет — закрытие свайпом вниз / тапом по
+/// затемнению (как в дизайн-референсе). Форма раскрывается прогрессивно:
+/// Формат → Тип → Название → «Дополнительные параметры».
+Future<void> openMediaEditor(BuildContext context, {String? entryId}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => MediaEditorSheet(entryId: entryId),
+  );
+}
 
-  /// `null` — создание новой; иначе — редактирование существующей карточки.
+/// Содержимое модального шита: создаёт [MediaEditorCubit] и строит форму, когда
+/// загрузка завершена.
+class MediaEditorSheet extends StatelessWidget {
+  const MediaEditorSheet({super.key, this.entryId});
+
   final String? entryId;
 
   @override
@@ -42,9 +56,57 @@ class MediaEditorPage extends StatelessWidget {
       ),
       child: BlocBuilder<MediaEditorCubit, MediaEditorState>(
         buildWhen: (a, b) => a.loading != b.loading,
-        builder: (context, state) => state.loading
-            ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-            : const _EditorForm(),
+        builder: (context, state) =>
+            state.loading ? const _LoadingSheet() : const _EditorForm(),
+      ),
+    );
+  }
+}
+
+/// Декорация контейнера шита: surface2 + скруглённый верх.
+BoxDecoration _sheetDecoration(BuildContext context) => BoxDecoration(
+      color: context.tokens.surface2,
+      borderRadius:
+          const BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
+    );
+
+class _LoadingSheet extends StatelessWidget {
+  const _LoadingSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Container(
+        decoration: _sheetDecoration(context),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _DragHandle(),
+            SizedBox(
+              height: 140,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// «Грабер» сверху шита — визуальная подсказка, что лист тянется/закрывается.
+class _DragHandle extends StatelessWidget {
+  const _DragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10, bottom: 4),
+      width: 36,
+      height: 4,
+      decoration: BoxDecoration(
+        color: context.tokens.surface3,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
     );
   }
@@ -63,6 +125,10 @@ class _EditorFormState extends State<_EditorForm> {
   late final TextEditingController _year;
   late final TextEditingController _note;
 
+  /// Раскрыт ли блок «Дополнительные параметры». В режиме редактирования —
+  /// сразу раскрыт (там обычно уже есть данные).
+  late bool _extraExpanded;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +137,7 @@ class _EditorFormState extends State<_EditorForm> {
     _original = TextEditingController(text: s.originalTitle ?? '');
     _year = TextEditingController(text: s.year?.toString() ?? '');
     _note = TextEditingController(text: s.note ?? '');
+    _extraExpanded = s.mode == EditorMode.edit;
   }
 
   @override
@@ -84,7 +151,7 @@ class _EditorFormState extends State<_EditorForm> {
 
   /// Подтверждение отмены: диалог только при создании с непустым вводом.
   /// Возвращает true, если можно уходить (терять нечего или подтвердили).
-  /// Общий путь для крестика и системного «назад» (PopScope).
+  /// Общий путь для системного «назад» и свайпа-закрытия (PopScope).
   Future<bool> _confirmDiscard() async {
     final s = context.read<MediaEditorCubit>().state;
     if (!(s.mode == EditorMode.create && s.title.trim().isNotEmpty)) return true;
@@ -106,10 +173,6 @@ class _EditorFormState extends State<_EditorForm> {
       ),
     );
     return discard == true;
-  }
-
-  Future<void> _close() async {
-    if (await _confirmDiscard() && mounted) context.pop();
   }
 
   Future<void> _pickCover(BuildContext context) async {
@@ -167,12 +230,13 @@ class _EditorFormState extends State<_EditorForm> {
 
   @override
   Widget build(BuildContext context) {
+    final maxH = MediaQuery.sizeOf(context).height * 0.92;
     return BlocConsumer<MediaEditorCubit, MediaEditorState>(
       listenWhen: (a, b) =>
           a.justSaved != b.justSaved || a.errorMessage != b.errorMessage,
       listener: (context, state) {
         if (state.justSaved) {
-          context.pop();
+          Navigator.of(context).pop();
         } else if (state.errorMessage != null) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -181,9 +245,9 @@ class _EditorFormState extends State<_EditorForm> {
       },
       builder: (context, state) {
         final cubit = context.read<MediaEditorCubit>();
-        // Системный «назад» при несохранённом вводе спрашивает то же
-        // подтверждение, что и крестик. canPop гейтит ТОЛЬКО системный pop;
-        // программный context.pop() (крестик/justSaved) безусловен и проходит.
+        // Свайп-закрытие/системный «назад» при несохранённом вводе спрашивает
+        // подтверждение. canPop гейтит ТОЛЬКО непрограммный pop; программный
+        // Navigator.pop (justSaved) безусловен.
         final guardUnsaved = state.mode == EditorMode.create &&
             state.title.trim().isNotEmpty &&
             !state.justSaved &&
@@ -192,49 +256,33 @@ class _EditorFormState extends State<_EditorForm> {
           canPop: !guardUnsaved,
           onPopInvokedWithResult: (didPop, _) async {
             if (didPop) return;
-            if (await _confirmDiscard() && context.mounted) context.pop();
+            if (await _confirmDiscard() && context.mounted) {
+              Navigator.of(context).pop();
+            }
           },
-          child: Scaffold(
-            body: SafeArea(
+          child: Padding(
+            padding:
+                EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+            child: Container(
+              constraints: BoxConstraints(maxHeight: maxH),
+              decoration: _sheetDecoration(context),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _TopBar(
+                  const _DragHandle(),
+                  _SheetHeader(
                     title: state.mode == EditorMode.create
                         ? 'Новая карточка'
                         : 'Редактирование',
                     canSave: state.canSave,
                     saving: state.saving,
-                    onClose: _close,
                     onSave: cubit.save,
                   ),
-                  Expanded(
+                  Flexible(
                     child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 36),
-                      children: [
-                        _required(context, state, cubit),
-                        const _GroupGap(),
-                        const Divider(height: 1),
-                        const _GroupGap(),
-                        _main(context, state, cubit),
-                        _conditional(
-                          visible: state.isEpisodic,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 18),
-                            child: _ProgressBlock(state: state, cubit: cubit),
-                          ),
-                        ),
-                        _conditional(
-                          visible: state.showReason,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 18),
-                            child: _ReasonBlock(state: state, cubit: cubit),
-                          ),
-                        ),
-                        const _GroupGap(),
-                        _dates(context, state, cubit),
-                        const _GroupGap(),
-                        _noteField(context, cubit),
-                      ],
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                      children: _fields(context, state, cubit),
                     ),
                   ),
                 ],
@@ -246,41 +294,40 @@ class _EditorFormState extends State<_EditorForm> {
     );
   }
 
-  // ─────────────────────────── секция 1 · обязательно ───────────────────────
+  // ─────────────────────────── прогрессивная форма ──────────────────────────
 
-  Widget _required(
+  List<Widget> _fields(
       BuildContext context, MediaEditorState state, MediaEditorCubit cubit) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const EditorSectionHeader(index: 1, label: 'Обязательно', accent: true),
-        const EditorLabel('Формат'),
-        EditorSegments<MediaFormat>(
-          value: state.format,
-          onChanged: cubit.setFormat,
-          options: const [
-            (MediaFormat.single, 'Одиночный'),
-            (MediaFormat.episodic, 'Серийный'),
-          ],
-        ),
-        const SizedBox(height: 11),
+    return [
+      const EditorLabel('Формат'),
+      EditorSegments<MediaFormat>(
+        value: state.format,
+        onChanged: cubit.setFormat,
+        options: const [
+          (MediaFormat.single, 'Одиночный'),
+          (MediaFormat.episodic, 'Серийный'),
+        ],
+      ),
+      // Тип — только когда выбран формат (подписи видов зависят от формата).
+      if (state.format != null) ...[
+        const SizedBox(height: 14),
         const EditorLabel('Тип'),
-        // Список видов зависит от формата: «Одиночный» → Фильм/Полнометражное
-        // аниме/…, «Серийный» → Сериал/Аниме-сериал/… (одна категория, разные
-        // подписи — ADR-07). Сегмент-контрол не вмещает 10 видов → Wrap-чипы.
         Wrap(
           spacing: 7,
           runSpacing: 7,
           children: [
             for (final type in MediaType.values)
               EditorChip(
-                label: type.labelFor(state.format),
+                label: type.labelFor(state.format!),
                 selected: state.mediaType == type,
                 onTap: () => cubit.setMediaType(type),
               ),
           ],
         ),
-        const SizedBox(height: 11),
+      ],
+      // Название и всё остальное — только когда выбран тип.
+      if (state.mediaType != null) ...[
+        const SizedBox(height: 14),
         const EditorLabel('Название', required: true),
         TextField(
           controller: _title,
@@ -293,7 +340,23 @@ class _EditorFormState extends State<_EditorForm> {
           ),
           decoration: editorFieldDecoration(context, hint: 'Название'),
         ),
-        const SizedBox(height: 11),
+        const SizedBox(height: 16),
+        _ExpandableSection(
+          title: 'Дополнительные параметры',
+          subtitle: 'Статус, оценка, обложка, теги, даты, заметка…',
+          expanded: _extraExpanded,
+          onToggle: () => setState(() => _extraExpanded = !_extraExpanded),
+          child: _extra(context, state, cubit),
+        ),
+      ],
+    ];
+  }
+
+  Widget _extra(
+      BuildContext context, MediaEditorState state, MediaEditorCubit cubit) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         const EditorLabel('Статус'),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -312,18 +375,7 @@ class _EditorFormState extends State<_EditorForm> {
             ],
           ),
         ),
-      ],
-    );
-  }
-
-  // ─────────────────────────── секция 2 · основное ──────────────────────────
-
-  Widget _main(
-      BuildContext context, MediaEditorState state, MediaEditorCubit cubit) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const EditorSectionHeader(index: 2, label: 'Основное'),
+        const SizedBox(height: 14),
         TextField(
           controller: _original,
           onChanged: cubit.setOriginalTitle,
@@ -349,10 +401,14 @@ class _EditorFormState extends State<_EditorForm> {
                 onChanged: (v) => cubit.setYear(int.tryParse(v.trim())),
                 keyboardType: TextInputType.number,
                 maxLength: 4,
-                buildCounter: (_, {required currentLength, required isFocused, maxLength}) =>
+                buildCounter: (_,
+                        {required currentLength,
+                        required isFocused,
+                        maxLength}) =>
                     null,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: TextStyle(fontSize: 14 * uiScale, color: context.tokens.onBg),
+                style:
+                    TextStyle(fontSize: 14 * uiScale, color: context.tokens.onBg),
                 decoration: editorFieldDecoration(context, hint: 'Год'),
               ),
             ),
@@ -384,18 +440,21 @@ class _EditorFormState extends State<_EditorForm> {
           onToggle: cubit.toggleTag,
           onCreate: cubit.addTag,
         ),
-      ],
-    );
-  }
-
-  // ─────────────────────────── даты ─────────────────────────────────────────
-
-  Widget _dates(
-      BuildContext context, MediaEditorState state, MediaEditorCubit cubit) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const EditorSectionHeader(index: 3, label: 'Даты'),
+        _conditional(
+          visible: state.isEpisodic,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 18),
+            child: _ProgressBlock(state: state, cubit: cubit),
+          ),
+        ),
+        _conditional(
+          visible: state.showReason,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 18),
+            child: _ReasonBlock(state: state, cubit: cubit),
+          ),
+        ),
+        const SizedBox(height: 18),
         CatalogDateField(
           label: 'Дата начала',
           value: state.startedAt,
@@ -413,14 +472,7 @@ class _EditorFormState extends State<_EditorForm> {
           value: state.finishedAt,
           onChanged: (d) => cubit.setDate(EditorDateSlot.finished, d),
         ),
-      ],
-    );
-  }
-
-  Widget _noteField(BuildContext context, MediaEditorCubit cubit) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        const SizedBox(height: 18),
         const EditorLabel('Заметка'),
         TextField(
           controller: _note,
@@ -455,11 +507,186 @@ class _EditorFormState extends State<_EditorForm> {
   }
 }
 
-class _GroupGap extends StatelessWidget {
-  const _GroupGap();
+// ─────────────────────────── шапка шита ──────────────────────────────────
+
+class _SheetHeader extends StatelessWidget {
+  const _SheetHeader({
+    required this.title,
+    required this.canSave,
+    required this.saving,
+    required this.onSave,
+  });
+
+  final String title;
+  final bool canSave;
+  final bool saving;
+  final VoidCallback onSave;
 
   @override
-  Widget build(BuildContext context) => const SizedBox(height: 18);
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 2, 10, 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15.5 * uiScale,
+                fontWeight: FontWeight.w700,
+                color: tk.onBg,
+              ),
+            ),
+          ),
+          _SaveIconButton(enabled: canSave, saving: saving, onTap: onSave),
+        ],
+      ),
+    );
+  }
+}
+
+class _SaveIconButton extends StatelessWidget {
+  const _SaveIconButton({
+    required this.enabled,
+    required this.saving,
+    required this.onTap,
+  });
+
+  final bool enabled;
+  final bool saving;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: 'Сохранить',
+      excludeSemantics: true,
+      onTap: enabled ? onTap : null,
+      child: Material(
+        color: enabled ? tk.primary : tk.surface3,
+        shape: const CircleBorder(),
+        child: InkWell(
+          key: const Key('editor-save'),
+          onTap: enabled ? onTap : null,
+          customBorder: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: saving
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: tk.onPrimary,
+                    ),
+                  )
+                : Icon(
+                    Icons.check_rounded,
+                    size: 20,
+                    color: enabled ? tk.onPrimary : tk.onFaint,
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────── раскрывающийся блок ─────────────────────────────
+
+/// Сворачиваемая секция «Дополнительные параметры»: кликабельная шапка с
+/// поворачивающимся шевроном + анимированное раскрытие содержимого.
+class _ExpandableSection extends StatelessWidget {
+  const _ExpandableSection({
+    required this.title,
+    required this.expanded,
+    required this.onToggle,
+    required this.child,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    return Container(
+      decoration: BoxDecoration(
+        color: tk.surface,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: tk.outlineSoft),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onToggle();
+            },
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 13.5 * uiScale,
+                            fontWeight: FontWeight.w700,
+                            color: tk.onBg,
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle!,
+                            style: TextStyle(
+                              fontSize: 11 * uiScale,
+                              color: tk.onMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: expanded ? 0.5 : 0,
+                    duration: AppDurations.base,
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        color: tk.onMuted),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: AppDurations.base,
+            curve: const Cubic(0.2, 0, 0, 1),
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                    child: child,
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────── обложка ─────────────────────────────────────
@@ -578,113 +805,6 @@ class _CoverAction extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: c)),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────── верхний бар ─────────────────────────────────
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({
-    required this.title,
-    required this.canSave,
-    required this.saving,
-    required this.onClose,
-    required this.onSave,
-  });
-
-  final String title;
-  final bool canSave;
-  final bool saving;
-  final VoidCallback onClose;
-  final VoidCallback onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    final tk = context.tokens;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
-      child: Row(
-        children: [
-          Semantics(
-            button: true,
-            label: 'Закрыть',
-            excludeSemantics: true,
-            onTap: onClose,
-            child: Material(
-              color: tk.surface,
-              shape: const CircleBorder(),
-              child: InkWell(
-                onTap: onClose,
-                customBorder: const CircleBorder(),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(Icons.close_rounded, size: 20, color: tk.onBg),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15 * uiScale,
-                fontWeight: FontWeight.w700,
-                color: tk.onBg,
-              ),
-            ),
-          ),
-          _SaveButton(enabled: canSave, saving: saving, onTap: onSave),
-        ],
-      ),
-    );
-  }
-}
-
-class _SaveButton extends StatelessWidget {
-  const _SaveButton({
-    required this.enabled,
-    required this.saving,
-    required this.onTap,
-  });
-
-  final bool enabled;
-  final bool saving;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final tk = context.tokens;
-    return Material(
-      color: enabled ? tk.primary : tk.tint(tk.primary, 0.30),
-      borderRadius: BorderRadius.circular(AppRadii.pill),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-        child: Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
-          child: saving
-              ? SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: tk.onPrimary,
-                  ),
-                )
-              : Text(
-                  'Сохранить',
-                  style: TextStyle(
-                    fontSize: 13.5 * uiScale,
-                    fontWeight: FontWeight.w700,
-                    color: enabled ? tk.onPrimary : tk.onFaint,
-                  ),
-                ),
         ),
       ),
     );

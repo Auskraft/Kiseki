@@ -9,7 +9,6 @@ import '../../core/theme/theme_context.dart';
 import '../../core/theme/theme_picker_page.dart';
 import '../../features/docs/privacy_policy_page.dart';
 import '../../features/media/presentation/pages/media_detail_page.dart';
-import '../../features/media/presentation/pages/media_editor_page.dart';
 import '../../features/media/presentation/pages/media_trash_page.dart';
 import '../../features/media/presentation/pages/settings_page.dart';
 import '../../features/media/presentation/pages/tags_page.dart';
@@ -19,7 +18,6 @@ import '../../features/media/presentation/pages/tags_page.dart';
 /// задним числом нельзя — на них завязан deep-link.
 abstract final class AppRoute {
   static const home = '/';
-  static const editor = '/editor';
   static const settings = '/settings';
   static const tags = '/settings/tags';
   static const trash = '/settings/trash';
@@ -31,9 +29,6 @@ abstract final class AppRoute {
 
   /// Карточка по UUID (deep-link).
   static String detail(String id) => '/item/$id';
-
-  /// Редактирование существующей карточки по UUID.
-  static String edit(String id) => '/item/$id/edit';
 }
 
 /// Собирает go_router приложения. Создаётся один раз на монтирование дерева
@@ -55,18 +50,9 @@ GoRouter createAppRouter() => GoRouter(
           builder: (context, state) => const MainShell(),
         ),
         GoRoute(
-          path: AppRoute.editor,
-          builder: (context, state) => const MediaEditorPage(),
-        ),
-        GoRoute(
           path: '/item/:id',
           builder: (context, state) =>
               MediaDetailPage(entryId: state.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/item/:id/edit',
-          builder: (context, state) =>
-              MediaEditorPage(entryId: state.pathParameters['id']),
         ),
         GoRoute(
           path: AppRoute.settings,

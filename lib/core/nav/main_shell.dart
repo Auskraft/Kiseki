@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../app/router/app_router.dart';
 import '../../features/media/presentation/pages/main_screen.dart';
+import '../../features/media/presentation/pages/media_editor_page.dart';
 import '../../features/media/presentation/pages/settings_page.dart';
 import 'capsule_nav_bar.dart';
 import 'classic_nav_bar.dart';
@@ -65,7 +64,7 @@ class _MainShellState extends State<MainShell> {
           ? StyledFab(
               icon: Icons.add,
               label: 'Добавить',
-              onPressed: () => context.push(AppRoute.editor),
+              onPressed: () => openMediaEditor(context),
             )
           : null,
       // Обёртка-свайп здесь, а не в каждом баре — листание для всех 3 стилей.

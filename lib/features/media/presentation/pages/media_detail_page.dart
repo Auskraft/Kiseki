@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../app/di/injector.dart';
-import '../../../../app/router/app_router.dart';
 import '../../../../core/catalog/catalog_date.dart';
 import '../../../../core/catalog/date_precision.dart';
 import '../../../../core/catalog/tag.dart';
@@ -21,6 +20,7 @@ import '../../domain/media_repository.dart';
 import '../cubit/media_detail_cubit.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/status_change_sheet.dart';
+import 'media_editor_page.dart';
 
 /// Экран 02 — детальная карточка медиа. Реактивно следит за записью и даёт
 /// быстрые действия (смена статуса, избранное, +1 пересмотр, правка, корзина).
@@ -133,7 +133,7 @@ class _DetailView extends StatelessWidget {
                 ),
                 const SizedBox(height: 22),
                 _Actions(
-                  onEdit: () => context.push(AppRoute.edit(entry.id)),
+                  onEdit: () => openMediaEditor(context, entryId: entry.id),
                   onDelete: () => _delete(context),
                 ),
               ],
@@ -310,7 +310,7 @@ class _MoreButton extends StatelessWidget {
         onSelected: (v) {
           final cubit = context.read<MediaDetailCubit>();
           if (v == 'edit') {
-            context.push(AppRoute.edit(entry.id));
+            openMediaEditor(context, entryId: entry.id);
           } else if (v == 'trash') {
             final router = GoRouter.of(context);
             cubit.softDelete().then((_) {

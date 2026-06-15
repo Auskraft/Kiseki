@@ -121,7 +121,7 @@ InputDecoration editorFieldDecoration(
 }
 
 /// Сегментированный выбор (равные сегменты). Активный — заливка primary.
-/// Применяется для типа медиа и формата.
+/// `value == null` — ни один сегмент не выбран (прогрессивная форма).
 class EditorSegments<T> extends StatelessWidget {
   const EditorSegments({
     super.key,
@@ -131,7 +131,7 @@ class EditorSegments<T> extends StatelessWidget {
   });
 
   final List<(T, String)> options;
-  final T value;
+  final T? value;
   final ValueChanged<T> onChanged;
 
   @override

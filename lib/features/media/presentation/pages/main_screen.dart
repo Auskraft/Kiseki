@@ -20,6 +20,7 @@ import '../widgets/filter_sheet.dart';
 import '../widgets/media_card.dart';
 import '../widgets/media_list_tile.dart';
 import '../widgets/mini_poster.dart';
+import 'media_editor_page.dart';
 
 /// Главный экран — грид/список картотеки + полки «Жду серии»/«Смотрю сейчас»,
 /// поиск, фильтр и сортировка.
@@ -44,7 +45,7 @@ class MainScreen extends StatelessWidget {
 }
 
 void _openEditor(BuildContext context) {
-  context.push(AppRoute.editor);
+  openMediaEditor(context);
 }
 
 void _openDetail(BuildContext context, String entryId) {

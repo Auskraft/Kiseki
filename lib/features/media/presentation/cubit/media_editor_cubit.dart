@@ -30,8 +30,8 @@ class MediaEditorState extends Equatable {
     required this.mode,
     this.entryId,
     this.title = '',
-    this.mediaType = MediaType.movie,
-    this.format = MediaFormat.single,
+    this.mediaType,
+    this.format,
     this.status = WatchStatus.plan,
     this.rating,
     this.originalTitle,
@@ -62,8 +62,13 @@ class MediaEditorState extends Equatable {
   final String? entryId;
 
   final String title;
-  final MediaType mediaType;
-  final MediaFormat format;
+
+  /// `null` — вид ещё не выбран (форма раскрывается прогрессивно: Формат → Тип).
+  final MediaType? mediaType;
+
+  /// `null` — формат ещё не выбран (выбирается первым).
+  final MediaFormat? format;
+
   final WatchStatus status;
 
   /// Оценка 0–100; `null` = «не оценено».
@@ -118,7 +123,12 @@ class MediaEditorState extends Equatable {
 
   // !processingImage: иначе Save во время сжатия только что выбранной обложки
   // сохранил бы карточку без неё (новый id ещё не в state), а файл осиротел.
-  bool get canSave => title.trim().isNotEmpty && !saving && !processingImage;
+  bool get canSave =>
+      title.trim().isNotEmpty &&
+      format != null &&
+      mediaType != null &&
+      !saving &&
+      !processingImage;
 
   CatalogDate? dateFor(EditorDateSlot slot) => switch (slot) {
         EditorDateSlot.started => startedAt,
@@ -456,8 +466,8 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
 
     return MediaDraft(
       title: state.title.trim(),
-      mediaType: state.mediaType,
-      format: state.format,
+      mediaType: state.mediaType!,
+      format: state.format!,
       status: state.status,
       rating: state.rating == null ? null : Rating.clamp(state.rating!),
       unfinishedReason: reason,
