@@ -21,6 +21,7 @@ import '../widgets/editor/country_field.dart';
 import '../widgets/editor/editor_primitives.dart';
 import '../widgets/editor/rating_input.dart';
 import '../widgets/editor/tag_editor.dart';
+import '../widgets/editor/year_field.dart';
 
 /// Открывает редактор карточки (экран 03) как модальный боттом-шит.
 /// `entryId == null` — создание, иначе редактирование существующей карточки.
@@ -122,7 +123,6 @@ class _EditorForm extends StatefulWidget {
 class _EditorFormState extends State<_EditorForm> {
   late final TextEditingController _title;
   late final TextEditingController _original;
-  late final TextEditingController _year;
   late final TextEditingController _note;
 
   /// Раскрыт ли блок «Дополнительные параметры». В режиме редактирования —
@@ -135,7 +135,6 @@ class _EditorFormState extends State<_EditorForm> {
     final s = context.read<MediaEditorCubit>().state;
     _title = TextEditingController(text: s.title);
     _original = TextEditingController(text: s.originalTitle ?? '');
-    _year = TextEditingController(text: s.year?.toString() ?? '');
     _note = TextEditingController(text: s.note ?? '');
     _extraExpanded = s.mode == EditorMode.edit;
   }
@@ -144,7 +143,6 @@ class _EditorFormState extends State<_EditorForm> {
   void dispose() {
     _title.dispose();
     _original.dispose();
-    _year.dispose();
     _note.dispose();
     super.dispose();
   }
@@ -376,61 +374,19 @@ class _EditorFormState extends State<_EditorForm> {
           ),
         ),
         const SizedBox(height: 14),
-        TextField(
-          controller: _original,
-          onChanged: cubit.setOriginalTitle,
-          style: TextStyle(
-            fontSize: 14 * uiScale,
-            fontStyle: FontStyle.italic,
-            color: context.tokens.onBg,
-          ),
-          decoration: editorFieldDecoration(
-            context,
-            hint: 'Оригинальное название',
-            italicHint: true,
-          ),
-        ),
-        const SizedBox(height: 11),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              flex: 2,
-              child: TextField(
-                controller: _year,
-                onChanged: (v) => cubit.setYear(int.tryParse(v.trim())),
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                buildCounter: (_,
-                        {required currentLength,
-                        required isFocused,
-                        maxLength}) =>
-                    null,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style:
-                    TextStyle(fontSize: 14 * uiScale, color: context.tokens.onBg),
-                decoration: editorFieldDecoration(context, hint: 'Год'),
-              ),
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              flex: 3,
-              child: CountryField(
-                value: state.country,
-                onChanged: cubit.setCountry,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 11),
-        const EditorLabel('Обложка'),
-        _CoverField(
+        _CoverInfoRow(
           coverImageId: state.coverImageId,
           processing: state.processingImage,
-          onPick: () => _pickCover(context),
-          onRemove: cubit.removeCover,
+          onPickCover: () => _pickCover(context),
+          onRemoveCover: cubit.removeCover,
+          originalController: _original,
+          onOriginalChanged: cubit.setOriginalTitle,
+          year: state.year,
+          onYearChanged: cubit.setYear,
+          country: state.country,
+          onCountryChanged: cubit.setCountry,
         ),
-        const SizedBox(height: 11),
+        const SizedBox(height: 14),
         RatingInput(value: state.rating, onChanged: cubit.setRating),
         const SizedBox(height: 14),
         const EditorLabel('Теги'),
@@ -689,10 +645,89 @@ class _ExpandableSection extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── обложка ─────────────────────────────────────
+// ─────────────────── обложка + основное (одной строкой) ───────────────────
 
-class _CoverField extends StatelessWidget {
-  const _CoverField({
+/// Слева — обложка, справа в две строки: оригинальное название и (год+страна),
+/// выровненные по высоте обложки. Текст-подсказка у обложки убрана.
+class _CoverInfoRow extends StatelessWidget {
+  const _CoverInfoRow({
+    required this.coverImageId,
+    required this.processing,
+    required this.onPickCover,
+    required this.onRemoveCover,
+    required this.originalController,
+    required this.onOriginalChanged,
+    required this.year,
+    required this.onYearChanged,
+    required this.country,
+    required this.onCountryChanged,
+  });
+
+  final String? coverImageId;
+  final bool processing;
+  final VoidCallback onPickCover;
+  final VoidCallback onRemoveCover;
+  final TextEditingController originalController;
+  final ValueChanged<String> onOriginalChanged;
+  final int? year;
+  final ValueChanged<int?> onYearChanged;
+  final String? country;
+  final ValueChanged<String?> onCountryChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _CoverThumb(
+          coverImageId: coverImageId,
+          processing: processing,
+          onPick: onPickCover,
+          onRemove: onRemoveCover,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: originalController,
+                onChanged: onOriginalChanged,
+                style: TextStyle(
+                  fontSize: 14 * uiScale,
+                  fontStyle: FontStyle.italic,
+                  color: context.tokens.onBg,
+                ),
+                decoration: editorFieldDecoration(
+                  context,
+                  hint: 'Оригинальное название',
+                  italicHint: true,
+                ),
+              ),
+              const SizedBox(height: 9),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 104,
+                    child: YearField(value: year, onChanged: onYearChanged),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: CountryField(
+                        value: country, onChanged: onCountryChanged),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CoverThumb extends StatelessWidget {
+  const _CoverThumb({
     required this.coverImageId,
     required this.processing,
     required this.onPick,
@@ -707,105 +742,69 @@ class _CoverField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
-    final text = Theme.of(context).textTheme;
-    final hasCover = coverImageId != null;
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: processing ? null : onPick,
-          child: Container(
-            width: 84,
-            height: 118,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: tk.surface,
-              borderRadius: BorderRadius.circular(AppRadii.sm),
-              border: Border.all(color: tk.outlineSoft),
-            ),
-            child: processing
-                ? const Center(
-                    child: SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2)))
-                : hasCover
-                    ? Image.file(
-                        getIt<MediaPaths>().absFull(coverImageId!),
-                        fit: BoxFit.cover,
-                        gaplessPlayback: true,
-                        errorBuilder: (_, _, _) => Icon(
-                            Icons.broken_image_outlined, color: tk.onFaint),
-                      )
-                    : Icon(Icons.add_photo_alternate_outlined,
-                        size: 28, color: tk.onFaint),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: hasCover
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _CoverAction(
-                        icon: Icons.swap_horiz_rounded,
-                        label: 'Заменить',
-                        onTap: onPick),
-                    _CoverAction(
-                        icon: Icons.delete_outline_rounded,
-                        label: 'Убрать',
-                        color: tk.error,
-                        onTap: onRemove),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Добавить обложку', style: text.titleSmall),
-                    const SizedBox(height: 3),
-                    Text('Из галереи или камеры', style: text.bodySmall),
-                  ],
+    final has = coverImageId != null;
+    return SizedBox(
+      width: 76,
+      height: 104,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Semantics(
+              button: true,
+              label: has ? 'Заменить обложку' : 'Добавить обложку',
+              child: GestureDetector(
+                onTap: processing ? null : onPick,
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: tk.surface,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
+                    border: Border.all(color: tk.outlineSoft),
+                  ),
+                  child: processing
+                      ? const Center(
+                          child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2)))
+                      : has
+                          ? Image.file(
+                              getIt<MediaPaths>().absFull(coverImageId!),
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              errorBuilder: (_, _, _) => Icon(
+                                  Icons.broken_image_outlined,
+                                  color: tk.onFaint),
+                            )
+                          : Center(
+                              child: Icon(Icons.add_photo_alternate_outlined,
+                                  size: 26, color: tk.onFaint)),
                 ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CoverAction extends StatelessWidget {
-  const _CoverAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = color ?? context.tokens.onMuted;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.xs),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 17, color: c),
-            const SizedBox(width: 6),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 13 * uiScale,
-                    fontWeight: FontWeight.w600,
-                    color: c)),
-          ],
-        ),
+              ),
+            ),
+          ),
+          if (has && !processing)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Semantics(
+                button: true,
+                label: 'Убрать обложку',
+                child: GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded,
+                        size: 14, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

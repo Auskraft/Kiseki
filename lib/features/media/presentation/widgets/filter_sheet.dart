@@ -232,9 +232,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                 _Group(
                   label: 'Страна',
                   child: _Chips<String>(
-                    values: kCountries.keys.toList(),
+                    values: kCommonCountryCodes,
                     selected: _countries,
-                    label: countryName,
+                    label: (c) => '${countryFlag(c)}  ${countryName(c)}',
                     onToggle: (v) => setState(() => _toggle(_countries, v)),
                   ),
                 ),
