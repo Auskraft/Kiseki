@@ -16,11 +16,11 @@ import '../../domain/media_format.dart';
 import '../../domain/media_repository.dart';
 import '../../domain/media_type.dart';
 import '../cubit/media_editor_cubit.dart';
-import '../widgets/editor/catalog_date_field.dart';
 import '../widgets/editor/country_field.dart';
 import '../widgets/editor/editor_primitives.dart';
 import '../widgets/editor/rating_input.dart';
 import '../widgets/editor/tag_editor.dart';
+import '../widgets/editor/watch_dates_section.dart';
 import '../widgets/editor/year_field.dart';
 
 /// Открывает редактор карточки (экран 03) как модальный боттом-шит.
@@ -411,22 +411,15 @@ class _EditorFormState extends State<_EditorForm> {
           ),
         ),
         const SizedBox(height: 18),
-        CatalogDateField(
-          label: 'Дата начала',
-          value: state.startedAt,
-          onChanged: (d) => cubit.setDate(EditorDateSlot.started, d),
-        ),
-        const SizedBox(height: 14),
-        CatalogDateField(
-          label: 'Последний просмотр',
-          value: state.lastActivityAt,
-          onChanged: (d) => cubit.setDate(EditorDateSlot.lastActivity, d),
-        ),
-        const SizedBox(height: 14),
-        CatalogDateField(
-          label: 'Дата завершения',
-          value: state.finishedAt,
-          onChanged: (d) => cubit.setDate(EditorDateSlot.finished, d),
+        WatchDatesSection(
+          startedAt: state.startedAt,
+          onStarted: (d) => cubit.setDate(EditorDateSlot.started, d),
+          lastActivityAt: state.lastActivityAt,
+          onLastActivity: (d) => cubit.setDate(EditorDateSlot.lastActivity, d),
+          finishedAt: state.finishedAt,
+          onFinished: (d) => cubit.setDate(EditorDateSlot.finished, d),
+          rewatchCount: state.rewatchCount,
+          onRewatchChanged: cubit.setRewatchCount,
         ),
         const SizedBox(height: 18),
         const EditorLabel('Заметка'),

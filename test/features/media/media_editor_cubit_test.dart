@@ -142,6 +142,15 @@ void main() {
         reason: 'смена вида не сбрасывает формат');
   });
 
+  test('setRewatchCount меняет счётчик пересмотров и не уходит ниже 0', () {
+    final cubit = create();
+    addTearDown(cubit.close);
+    cubit.setRewatchCount(3);
+    expect(cubit.state.rewatchCount, 3);
+    cubit.setRewatchCount(-5);
+    expect(cubit.state.rewatchCount, 0);
+  });
+
   test('серия без сезона нормализуется к S1 (CHECK)', () async {
     final cubit = create();
     addTearDown(cubit.close);

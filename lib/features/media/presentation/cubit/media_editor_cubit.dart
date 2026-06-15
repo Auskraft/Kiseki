@@ -398,6 +398,9 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
     }
   }
 
+  void setRewatchCount(int v) =>
+      emit(state.copyWith(rewatchCount: v < 0 ? 0 : v));
+
   void setNote(String v) => emit(state.copyWith(note: () => v));
 
   void toggleTag(String tagId) {
