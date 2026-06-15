@@ -52,19 +52,31 @@ const _signalsDark = (
   favorite: Color(0xFFFF7BA3),
 );
 
+// Оценка: 10 градаций «плохо→хорошо» (red→orange→yellow→зеленоватый→green).
+// Семантика, единая для всех тем; индекс = value ~/ 10 (см. scoreColor).
 const _scoreLight = <Color>[
-  Color(0xFF5E78C9),
-  Color(0xFF3F9FA6),
-  Color(0xFF6FA64F),
-  Color(0xFFD79A3C),
-  Color(0xFFE2683E),
+  Color(0xFFD64545),
+  Color(0xFFE05A3A),
+  Color(0xFFE87331),
+  Color(0xFFE68C2E),
+  Color(0xFFD9A532),
+  Color(0xFFC7B739),
+  Color(0xFFA8BC3F),
+  Color(0xFF82B546),
+  Color(0xFF5BA94F),
+  Color(0xFF3C9D5A),
 ];
 const _scoreDark = <Color>[
-  Color(0xFF8090DB),
-  Color(0xFF5BBEC4),
-  Color(0xFF8FC56F),
-  Color(0xFFE6B45C),
-  Color(0xFFF0855C),
+  Color(0xFFEC5F5B),
+  Color(0xFFF1714A),
+  Color(0xFFF4883E),
+  Color(0xFFF09F3D),
+  Color(0xFFE7B845),
+  Color(0xFFD6C94F),
+  Color(0xFFB6CB55),
+  Color(0xFF8AC257),
+  Color(0xFF62BA62),
+  Color(0xFF49B473),
 ];
 
 const _statusLight = <WatchStatus, Color>{

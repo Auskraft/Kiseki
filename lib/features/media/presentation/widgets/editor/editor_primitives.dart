@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../../core/theme/app_dimens.dart';
 import '../../../../../core/theme/theme_context.dart';
@@ -171,7 +172,10 @@ class _Segment extends StatelessWidget {
       color: selected ? tk.primary : tk.surface,
       borderRadius: BorderRadius.circular(AppRadii.sm),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
         borderRadius: BorderRadius.circular(AppRadii.sm),
         child: Container(
           height: 38,
@@ -220,7 +224,10 @@ class EditorChip extends StatelessWidget {
       color: selected ? tk.tint(color, 0.18) : tk.surface,
       borderRadius: BorderRadius.circular(AppRadii.pill),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
         borderRadius: BorderRadius.circular(AppRadii.pill),
         child: Container(
           // Паддинг (а не height) задаёт размер: пилюля по контенту, текст

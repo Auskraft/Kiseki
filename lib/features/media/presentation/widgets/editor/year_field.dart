@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../../core/theme/app_dimens.dart';
 import '../../../../../core/theme/theme_context.dart';
@@ -90,7 +91,10 @@ class YearField extends StatelessWidget {
                       ),
                     ),
                   ),
-                  onSelectedItemChanged: (i) => temp = i,
+                  onSelectedItemChanged: (i) {
+                    HapticFeedback.selectionClick();
+                    temp = i;
+                  },
                   children: [
                     for (final y in years)
                       Center(

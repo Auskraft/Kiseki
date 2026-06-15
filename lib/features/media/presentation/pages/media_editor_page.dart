@@ -435,6 +435,7 @@ class _EditorFormState extends State<_EditorForm> {
           onChanged: cubit.setNote,
           minLines: 3,
           maxLines: 6,
+          maxLength: 256,
           textCapitalization: TextCapitalization.sentences,
           style: TextStyle(
             fontSize: 13.5 * uiScale,

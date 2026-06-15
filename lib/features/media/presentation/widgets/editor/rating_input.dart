@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../core/theme/app_dimens.dart';
 import '../../../../../core/theme/theme_context.dart';
 import 'editor_primitives.dart';
 
-/// Ввод оценки 0–100: число в цвете диапазона + слайдер (зона ≥48 dp).
+/// Ввод оценки. Хранится 0–100, показывается дробной /10 (8.4). Слайдер —
+/// спектр red→green (10 градаций) с тактильным откликом и плавной сменой цвета.
 /// `null` = «не оценено» («—»); первое касание ставит значение, «×» — сбрасывает.
-class RatingInput extends StatelessWidget {
+class RatingInput extends StatefulWidget {
   const RatingInput({super.key, required this.value, required this.onChanged});
 
   /// 0–100 или `null` («без оценки»).
@@ -15,10 +17,33 @@ class RatingInput extends StatelessWidget {
   final ValueChanged<int?> onChanged;
 
   @override
+  State<RatingInput> createState() => _RatingInputState();
+}
+
+class _RatingInputState extends State<RatingInput> {
+  int _lastTick = 0;
+
+  void _onSlide(double v) {
+    final nv = v.round();
+    if (nv != _lastTick) {
+      HapticFeedback.selectionClick();
+      _lastTick = nv;
+    }
+    widget.onChanged(nv);
+  }
+
+  void _clear() {
+    _lastTick = 0;
+    widget.onChanged(null);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
+    final value = widget.value;
     final rated = value != null;
-    final color = rated ? tk.scoreColor(value!) : tk.onFaint;
+    final color = rated ? tk.scoreColor(value) : tk.onFaint;
+    final ten = rated ? (value / 10).toStringAsFixed(1) : '—';
 
     return EditorCard(
       child: Column(
@@ -36,7 +61,7 @@ class RatingInput extends StatelessWidget {
               ),
               const Spacer(),
               if (rated)
-                _ClearButton(onTap: () => onChanged(null))
+                _ClearButton(onTap: _clear)
               else
                 Text(
                   'без оценки',
@@ -47,27 +72,29 @@ class RatingInput extends StatelessWidget {
                   ),
                 ),
               const SizedBox(width: 8),
-              Container(
-                width: 54,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 58,
                 height: 36,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: tk.surface3,
+                  color: rated ? tk.tint(color, 0.16) : tk.surface3,
                   borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
-                child: Text(
-                  rated ? '${value!}' : '—',
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
                   style: GoogleFonts.onest(
                     fontSize: 17 * uiScale,
                     fontWeight: FontWeight.w800,
                     color: color,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
+                  child: Text(ten),
                 ),
               ),
               const SizedBox(width: 6),
               Text(
-                '/100',
+                '/10',
                 style: TextStyle(
                   fontSize: 13 * uiScale,
                   fontWeight: FontWeight.w600,
@@ -76,21 +103,40 @@ class RatingInput extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 6,
-              activeTrackColor: color,
-              inactiveTrackColor: tk.surface3,
-              thumbColor: tk.surface2,
-              overlayColor: color.withValues(alpha: 0.14),
-              thumbShape: _RingThumb(color: color),
-              trackShape: const RoundedRectSliderTrackShape(),
-            ),
-            child: Slider(
-              value: (value ?? 0).toDouble(),
-              max: 100,
-              onChanged: (v) => onChanged(v.round()),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 32,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Спектр оценки (red→green) — всегда виден; позицию задаёт бегунок.
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 11),
+                  child: Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                      gradient: LinearGradient(colors: tk.scoreRamp),
+                    ),
+                  ),
+                ),
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 8,
+                    activeTrackColor: Colors.transparent,
+                    inactiveTrackColor: Colors.transparent,
+                    thumbColor: tk.surface2,
+                    overlayColor: color.withValues(alpha: 0.16),
+                    thumbShape: _RingThumb(color: color),
+                    trackShape: const RoundedRectSliderTrackShape(),
+                  ),
+                  child: Slider(
+                    value: (value ?? 0).toDouble(),
+                    max: 100,
+                    onChanged: _onSlide,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -132,7 +178,7 @@ class _ClearButton extends StatelessWidget {
   }
 }
 
-/// Бегунок-кольцо: surface-заливка + 2 px обводка цветом оценки (как в макете).
+/// Бегунок-кольцо: surface-заливка + 2 px обводка цветом текущей градации.
 class _RingThumb extends SliderComponentShape {
   const _RingThumb({required this.color});
 

@@ -55,7 +55,7 @@ class KisekiTokens extends ThemeExtension<KisekiTokens> {
   /// Цвет «избранного» (сердечко) на поверхности — не только над постером.
   final Color favorite;
 
-  /// Шкала оценки 0–100 (cold→warm), 5 ступеней.
+  /// Шкала оценки 0–100 (red→green), 10 ступеней.
   final List<Color> scoreRamp;
 
   /// Цвет статуса просмотра.
@@ -65,13 +65,11 @@ class KisekiTokens extends ThemeExtension<KisekiTokens> {
   Color tint(Color accent, [double amount = 0.16]) =>
       Color.alphaBlend(accent.withValues(alpha: amount), surface);
 
-  /// Цвет оценки по диапазону (число всегда дублируется текстом!).
+  /// Цвет оценки по диапазону (10 градаций red→green; число всегда дублируется
+  /// текстом!). Полоса 0–9 → band 0, …, 90–100 → band 9.
   Color scoreColor(int value) {
-    if (value < 40) return scoreRamp[0];
-    if (value < 60) return scoreRamp[1];
-    if (value < 75) return scoreRamp[2];
-    if (value < 90) return scoreRamp[3];
-    return scoreRamp[4];
+    final band = (value.clamp(0, 100) ~/ 10).clamp(0, scoreRamp.length - 1);
+    return scoreRamp[band];
   }
 
   Color statusColor(WatchStatus status) =>
