@@ -8,6 +8,7 @@ import 'package:kiseki/app/router/app_router.dart';
 import 'package:kiseki/core/catalog/tag_repository.dart';
 import 'package:kiseki/core/catalog/tag_repository_impl.dart';
 import 'package:kiseki/core/database/app_database.dart';
+import 'package:kiseki/core/nav/fab_style.dart';
 import 'package:kiseki/core/nav/menu_icons.dart';
 import 'package:kiseki/core/nav/nav_style.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
@@ -32,8 +33,10 @@ void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
   setUp(() async {
-    // classic — без бесконечной анимации (капсула повесила бы pumpAndSettle).
-    SharedPreferences.setMockInitialValues({'nav_bar_style': 'classic'});
+    // classic нав-бар + FAB без градиента — обе бесконечные анимации выключены,
+    // иначе pumpAndSettle не дождётся (капсула/дышащий градиент).
+    SharedPreferences.setMockInitialValues(
+        {'nav_bar_style': 'classic', 'fab_gradient_anim': false});
     db = AppDatabase(NativeDatabase.memory());
     final repo = MediaRepositoryImpl(db);
     getIt.registerSingleton<MediaRepository>(repo);
@@ -62,6 +65,8 @@ void main() {
     addTearDown(navCubit.close);
     final iconsCubit = MenuIconsCubit(prefs);
     addTearDown(iconsCubit.close);
+    final fabCubit = FabStyleCubit(prefs);
+    addTearDown(fabCubit.close);
 
     await tester.pumpWidget(
       MultiBlocProvider(
@@ -70,6 +75,7 @@ void main() {
           BlocProvider.value(value: listCubit),
           BlocProvider.value(value: navCubit),
           BlocProvider.value(value: iconsCubit),
+          BlocProvider.value(value: fabCubit),
         ],
         child: MaterialApp.router(
           theme: buildKisekiTheme(KisekiThemeId.base, Brightness.light),

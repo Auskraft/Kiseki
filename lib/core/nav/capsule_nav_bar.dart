@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/theme_context.dart';
+import 'breathing_gradient.dart';
 import 'nav_bar_surface.dart';
 import 'nav_style.dart';
-
-/// Период «дыхания» градиента активной капсулы (мс). Фаза считается от стенных
-/// часов по этому периоду — непрерывна при пересоздании бара (смена вкладки).
-const int _gradPeriodMs = 16000;
 
 /// Нав-бар «Капсула» (стиль [NavBarStyle.capsule]).
 ///
@@ -47,13 +44,6 @@ class _CapsuleNavBarState extends State<CapsuleNavBar>
   late final Animation<double> _move =
       CurvedAnimation(parent: _ctrl, curve: Curves.fastOutSlowIn);
 
-  // Тикер «дыхания» градиента (фазу берём от стенных часов — непрерывна между
-  // пересозданиями; тикер лишь будит перерисовку).
-  late final AnimationController _glow = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 16),
-  )..repeat();
-
   late int _fromIndex = widget.currentIndex;
 
   @override
@@ -68,7 +58,6 @@ class _CapsuleNavBarState extends State<CapsuleNavBar>
   @override
   void dispose() {
     _ctrl.dispose();
-    _glow.dispose();
     super.dispose();
   }
 
@@ -82,14 +71,8 @@ class _CapsuleNavBarState extends State<CapsuleNavBar>
     final tk = context.tokens;
     final systemBottom = MediaQuery.of(context).padding.bottom;
 
-    // Градиент «дыхания» из акцентов темы (зациклен: последний = первый — даёт
-    // бесшовное скольжение без тёмной складки).
-    final gradColors = <Color>[
-      tk.primary,
-      Color.lerp(tk.primary, tk.secondary, 0.4)!,
-      tk.secondary,
-      tk.primary,
-    ];
+    // Дышащий градиент из акцентов темы (общий с FAB).
+    final gradColors = breathingColors(tk.primary, tk.secondary);
 
     final gradientOn = widget.gradient;
     final activeFg = tk.onPrimary;
@@ -158,7 +141,6 @@ class _CapsuleNavBarState extends State<CapsuleNavBar>
                             label: items[i].label,
                             iconSize: _iconSize,
                             gradientColors: gradColors,
-                            glow: _glow,
                             useGradient: gradientOn,
                             activeSolid: tk.primary,
                             activeFg: activeFg,
@@ -195,7 +177,6 @@ class _CapsuleItem extends StatelessWidget {
     required this.label,
     required this.iconSize,
     required this.gradientColors,
-    required this.glow,
     required this.useGradient,
     required this.activeSolid,
     required this.activeFg,
@@ -212,7 +193,6 @@ class _CapsuleItem extends StatelessWidget {
   final String label;
   final double iconSize;
   final List<Color> gradientColors;
-  final Listenable glow;
   final bool useGradient;
   final Color activeSolid;
   final Color activeFg;
@@ -245,23 +225,7 @@ class _CapsuleItem extends StatelessWidget {
                 child: Opacity(
                   opacity: openness,
                   child: useGradient
-                      ? RepaintBoundary(
-                          child: AnimatedBuilder(
-                            animation: glow,
-                            builder: (context, _) {
-                              final phase =
-                                  (DateTime.now().millisecondsSinceEpoch %
-                                          _gradPeriodMs) /
-                                      _gradPeriodMs;
-                              final gradAnim =
-                                  phase < 0.5 ? phase * 2 : 2 - phase * 2;
-                              return CustomPaint(
-                                painter: _NavGradientPainter(
-                                    gradAnim, gradientColors),
-                              );
-                            },
-                          ),
-                        )
+                      ? BreathingGradient(colors: gradientColors)
                       : ColoredBox(color: activeSolid),
                 ),
               ),
@@ -307,41 +271,4 @@ class _CapsuleItem extends StatelessWidget {
   }
 }
 
-/// Плавный градиент активной капсулы: зацикленные цвета + оверсайз-шейдер
-/// (рект шире области) — скользящий градиент без жёсткого края и тёмной складки.
-class _NavGradientPainter extends CustomPainter {
-  _NavGradientPainter(this.t, this.colors);
-
-  final double t; // 0..1, треугольник «дыхания»
-  final List<Color> colors; // [c1, c2, c3, c1] — зациклены
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final dx = size.width * 2 * t;
-    final gradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: colors,
-      stops: const [0.0, 0.33, 0.66, 1.0],
-      transform: _NavGradientSlide(dx),
-    );
-    final paint = Paint()
-      ..shader = gradient.createShader(
-        Rect.fromLTWH(-size.width * 1.5, 0, size.width * 4, size.height),
-      );
-    canvas.drawRect(Offset.zero & size, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _NavGradientPainter old) => old.t != t;
-}
-
-/// Сдвиг градиента по горизонтали (эффект «течения» как в шапках).
-class _NavGradientSlide extends GradientTransform {
-  const _NavGradientSlide(this.dx);
-  final double dx;
-
-  @override
-  Matrix4 transform(Rect bounds, {TextDirection? textDirection}) =>
-      Matrix4.translationValues(dx, 0, 0);
-}
+// Градиент капсулы вынесен в общий BreathingGradient (core/nav/breathing_gradient).

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/nav/fab_style_picker_page.dart';
 import '../../core/nav/main_shell.dart';
 import '../../core/nav/menu_icons_picker_page.dart';
 import '../../core/nav/nav_style_picker_page.dart';
@@ -24,6 +25,7 @@ abstract final class AppRoute {
   static const trash = '/settings/trash';
   static const navStyle = '/settings/nav-style';
   static const menuIcons = '/settings/menu-icons';
+  static const fabStyle = '/settings/fab-style';
   static const theme = '/settings/theme';
   static const privacy = '/settings/privacy';
 
@@ -85,6 +87,10 @@ GoRouter createAppRouter() => GoRouter(
         GoRoute(
           path: AppRoute.menuIcons,
           builder: (context, state) => const MenuIconsPickerPage(),
+        ),
+        GoRoute(
+          path: AppRoute.fabStyle,
+          builder: (context, state) => const FabStylePickerPage(),
         ),
         GoRoute(
           path: AppRoute.theme,

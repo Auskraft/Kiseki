@@ -413,6 +413,12 @@ class _VisualStyleCard extends StatelessWidget {
             title: 'Иконки меню',
             onTap: () => context.push(AppRoute.menuIcons),
           ),
+          const _Divider(),
+          _Row(
+            icon: Icons.add_circle_outline_rounded,
+            title: 'Кнопка добавления',
+            onTap: () => context.push(AppRoute.fabStyle),
+          ),
         ],
       ),
     );

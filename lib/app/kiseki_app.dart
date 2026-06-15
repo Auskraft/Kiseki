@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/theme/kiseki_themes.dart';
 import '../core/theme/theme_cubit.dart';
+import '../core/nav/fab_style.dart';
 import '../core/nav/menu_icons.dart';
 import '../core/nav/nav_style.dart';
 import '../features/media/domain/media_repository.dart';
@@ -36,6 +37,7 @@ class _KisekiAppState extends State<KisekiApp> {
         BlocProvider(create: (_) => ThemeCubit(getIt<SharedPreferences>())),
         BlocProvider(create: (_) => NavStyleCubit(getIt<SharedPreferences>())),
         BlocProvider(create: (_) => MenuIconsCubit(getIt<SharedPreferences>())),
+        BlocProvider(create: (_) => FabStyleCubit(getIt<SharedPreferences>())),
         BlocProvider(create: (_) => MediaListCubit(getIt<MediaRepository>())),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
