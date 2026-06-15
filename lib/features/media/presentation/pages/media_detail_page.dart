@@ -156,7 +156,7 @@ class _Cover extends StatelessWidget {
     final parts = <String>[
       if (entry.year != null) '${entry.year}',
       if (entry.country != null) entry.country!,
-      entry.mediaType.label,
+      entry.mediaType.labelFor(entry.format),
     ];
     return parts.join(' · ');
   }

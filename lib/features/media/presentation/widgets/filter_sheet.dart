@@ -174,7 +174,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     values: MediaFormat.values,
                     selected: _formats,
                     label: (f) =>
-                        f == MediaFormat.single ? 'Одиночный' : 'С сериями',
+                        f == MediaFormat.single ? 'Одиночный' : 'Серийный',
                     onToggle: (v) => setState(() => _toggle(_formats, v)),
                   ),
                 ),

@@ -31,7 +31,7 @@ class MediaCard extends StatelessWidget {
   String get _subtitle {
     final parts = <String>[
       if (entry.year != null) '${entry.year}',
-      entry.mediaType.label,
+      entry.mediaType.labelFor(entry.format),
     ];
     return parts.join(' · ');
   }

@@ -61,8 +61,14 @@ class PosterPlaceholder extends StatelessWidget {
 
   Color _seed(MediaType type) => switch (type) {
         MediaType.movie => const Color(0xFF4E63B6),
-        MediaType.series => const Color(0xFF3E8E9E),
-        MediaType.drama => const Color(0xFFB85C82),
         MediaType.anime => const Color(0xFF8A5FC0),
+        MediaType.drama => const Color(0xFFB85C82),
+        MediaType.cartoon => const Color(0xFFE08A3C),
+        MediaType.documentary => const Color(0xFF5AA06E),
+        MediaType.concert => const Color(0xFFD05674),
+        MediaType.tvShow => const Color(0xFF3E8E9E),
+        MediaType.ova => const Color(0xFF7E6BD0),
+        MediaType.ona => const Color(0xFF6A8AD8),
+        MediaType.tvPlay => const Color(0xFF9C7B4E),
       };
 }

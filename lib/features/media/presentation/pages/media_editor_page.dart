@@ -254,25 +254,30 @@ class _EditorFormState extends State<_EditorForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const EditorSectionHeader(index: 1, label: 'Обязательно', accent: true),
-        const EditorLabel('Тип'),
-        EditorSegments<MediaType>(
-          value: state.mediaType,
-          onChanged: cubit.setMediaType,
-          options: const [
-            (MediaType.movie, 'Фильм'),
-            (MediaType.series, 'Сериал'),
-            (MediaType.anime, 'Аниме'),
-            (MediaType.drama, 'Дорама'),
-          ],
-        ),
-        const SizedBox(height: 11),
         const EditorLabel('Формат'),
         EditorSegments<MediaFormat>(
           value: state.format,
           onChanged: cubit.setFormat,
           options: const [
             (MediaFormat.single, 'Одиночный'),
-            (MediaFormat.episodic, 'С сериями'),
+            (MediaFormat.episodic, 'Серийный'),
+          ],
+        ),
+        const SizedBox(height: 11),
+        const EditorLabel('Тип'),
+        // Список видов зависит от формата: «Одиночный» → Фильм/Полнометражное
+        // аниме/…, «Серийный» → Сериал/Аниме-сериал/… (одна категория, разные
+        // подписи — ADR-07). Сегмент-контрол не вмещает 10 видов → Wrap-чипы.
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          children: [
+            for (final type in MediaType.values)
+              EditorChip(
+                label: type.labelFor(state.format),
+                selected: state.mediaType == type,
+                onTap: () => cubit.setMediaType(type),
+              ),
           ],
         ),
         const SizedBox(height: 11),

@@ -28,7 +28,7 @@ void main() {
         ));
     await db.into(db.mediaItems).insert(MediaItemsCompanion.insert(
           itemId: 'item-1',
-          mediaType: MediaType.series,
+          mediaType: MediaType.movie,
           format: MediaFormat.episodic,
           originalTitle: const Value('Breaking Bad'),
         ));
@@ -41,7 +41,7 @@ void main() {
     expect(core, hasLength(1));
     expect(media, hasLength(1));
     expect(core.single.status, WatchStatus.watching);
-    expect(media.single.mediaType, MediaType.series);
+    expect(media.single.mediaType, MediaType.movie);
   });
 
   test('FTS5 trigger indexes title + original_title, search joins by UUID',
@@ -107,5 +107,38 @@ void main() {
           )),
       throwsA(isA<SqliteException>()),
     );
+  });
+
+  test('миграция v1→v2: media_type "series" сворачивается в "movie"', () async {
+    final dir = Directory.systemTemp.createTempSync('kiseki_migrate_');
+    addTearDown(() {
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    });
+    final file = File(p.join(dir.path, 'v1.sqlite'));
+
+    // Поднимаем БД (onCreate ставит текущую user_version), кладём legacy-строку
+    // media_type='series' напрямую (минуя enum-конвертер) и откатываем
+    // user_version к 1 — имитируем БД старой версии.
+    final v1 = AppDatabase(NativeDatabase(file));
+    await v1.customStatement(
+      "INSERT INTO catalog_items (id, domain, title, status, is_favorite, "
+      "event_count, created_at, updated_at) "
+      "VALUES ('s1', 'media', 'Лост', 'completed', 0, 0, 0, 0)",
+    );
+    await v1.customStatement(
+      "INSERT INTO media_items (item_id, media_type, format) "
+      "VALUES ('s1', 'series', 'episodic')",
+    );
+    await v1.customStatement('PRAGMA user_version = 1');
+    await v1.close();
+
+    // Переоткрываем: Drift видит user_version=1 < schemaVersion → onUpgrade.
+    final v2 = AppDatabase(NativeDatabase(file));
+    addTearDown(v2.close);
+    final row = await v2
+        .customSelect("SELECT media_type FROM media_items WHERE item_id = 's1'")
+        .getSingle();
+    expect(row.read<String>('media_type'), 'movie');
+    expect(v2.schemaVersion, 2);
   });
 }

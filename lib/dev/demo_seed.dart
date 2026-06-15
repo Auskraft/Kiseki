@@ -18,7 +18,7 @@ Future<void> seedDemoData(MediaRepository repo, TagRepository tags) async {
   await repo.create(MediaDraft(
     title: 'Во все тяжкие',
     originalTitle: 'Breaking Bad',
-    mediaType: MediaType.series,
+    mediaType: MediaType.movie,
     format: MediaFormat.episodic,
     status: WatchStatus.completed,
     rating: const Rating(96),
@@ -36,7 +36,7 @@ Future<void> seedDemoData(MediaRepository repo, TagRepository tags) async {
   await repo.create(MediaDraft(
     title: 'Игра престолов',
     originalTitle: 'Game of Thrones',
-    mediaType: MediaType.series,
+    mediaType: MediaType.movie,
     format: MediaFormat.episodic,
     status: WatchStatus.watching,
     rating: const Rating(78),
@@ -88,7 +88,7 @@ Future<void> seedDemoData(MediaRepository repo, TagRepository tags) async {
   await repo.create(MediaDraft(
     title: 'Очень странные дела',
     originalTitle: 'Stranger Things',
-    mediaType: MediaType.series,
+    mediaType: MediaType.movie,
     format: MediaFormat.episodic,
     status: WatchStatus.plan,
     year: 2016,
@@ -112,7 +112,7 @@ Future<void> seedDemoData(MediaRepository repo, TagRepository tags) async {
 
   await repo.create(MediaDraft(
     title: 'Восхождение Юпитер',
-    mediaType: MediaType.series,
+    mediaType: MediaType.movie,
     format: MediaFormat.episodic,
     status: WatchStatus.watching,
     rating: const Rating(72),

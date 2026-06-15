@@ -25,7 +25,7 @@ class MediaListTile extends StatelessWidget {
     final parts = <String>[
       if ((entry.originalTitle ?? '').trim().isNotEmpty) entry.originalTitle!.trim(),
       if (entry.year != null) '${entry.year}',
-      entry.mediaType.label,
+      entry.mediaType.labelFor(entry.format),
     ];
     return parts.join(' · ');
   }

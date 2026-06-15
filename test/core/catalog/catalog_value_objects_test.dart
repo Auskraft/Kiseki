@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kiseki/core/catalog/rating.dart';
 import 'package:kiseki/core/catalog/tag_name.dart';
 import 'package:kiseki/core/catalog/watch_status.dart';
+import 'package:kiseki/features/media/domain/media_format.dart';
 import 'package:kiseki/features/media/domain/media_type.dart';
 
 void main() {
@@ -46,9 +47,12 @@ void main() {
       expect(WatchStatus.completed.code, 'completed');
     });
 
-    test('media type maps to default format', () {
-      expect(MediaType.movie.defaultFormat.code, 'single');
-      expect(MediaType.series.defaultFormat.code, 'episodic');
+    test('media type label depends on format (ADR-07)', () {
+      expect(MediaType.movie.labelFor(MediaFormat.single), 'Фильм');
+      expect(MediaType.movie.labelFor(MediaFormat.episodic), 'Сериал');
+      expect(MediaType.drama.labelFor(MediaFormat.episodic), 'Дорама');
+      expect(
+          MediaType.anime.labelFor(MediaFormat.single), 'Полнометражное аниме');
     });
   });
 }

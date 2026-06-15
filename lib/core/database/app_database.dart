@@ -38,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -49,6 +49,18 @@ class AppDatabase extends _$AppDatabase {
           }
           for (final stmt in extraIndexStatements) {
             await customStatement(stmt);
+          }
+        },
+        onUpgrade: (m, from, to) async {
+          // v1→v2: код media_type 'series' свёрнут в 'movie'. Эпизодность
+          // теперь несёт format (ADR-07), поэтому отдельный 'series' избыточен
+          // — это та же категория «Фильм/Сериал» с format='episodic'. Структура
+          // схемы не изменилась (data-only) → шаг миграции = один UPDATE.
+          if (from < 2) {
+            await customStatement(
+              "UPDATE media_items SET media_type = 'movie' "
+              "WHERE media_type = 'series'",
+            );
           }
         },
         beforeOpen: (details) async {

@@ -37,7 +37,7 @@ void main() {
   }) {
     return MediaDraft(
       title: title,
-      mediaType: MediaType.series,
+      mediaType: MediaType.movie,
       format: MediaFormat.episodic,
       status: status,
       originalTitle: original,
@@ -62,7 +62,7 @@ void main() {
     expect(entry!.title, 'Breaking Bad');
     expect(entry.originalTitle, 'Во все тяжкие');
     expect(entry.status, WatchStatus.watching);
-    expect(entry.mediaType, MediaType.series);
+    expect(entry.mediaType, MediaType.movie);
     expect(entry.format, MediaFormat.episodic);
     expect(entry.rating, const Rating(84));
     expect(entry.currentSeason, 2);

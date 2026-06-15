@@ -119,20 +119,25 @@ void main() {
     expect(cubit.state.errorMessage, 'Не удалось обработать изображение');
   });
 
-  test('setMediaType сбрасывает format к дефолту типа', () {
+  test('формат выбирается независимо от вида (ADR-07)', () {
     final cubit = create();
     addTearDown(cubit.close);
-    expect(cubit.state.format, MediaFormat.single); // movie по умолчанию
-    cubit.setMediaType(MediaType.series);
-    expect(cubit.state.format, MediaFormat.episodic);
-    cubit.setMediaType(MediaType.movie);
+    expect(cubit.state.format, MediaFormat.single); // дефолт
+    // Смена вида НЕ трогает формат:
+    cubit.setMediaType(MediaType.drama);
     expect(cubit.state.format, MediaFormat.single);
+    // Формат переключается явно:
+    cubit.setFormat(MediaFormat.episodic);
+    expect(cubit.state.format, MediaFormat.episodic);
+    cubit.setMediaType(MediaType.anime);
+    expect(cubit.state.format, MediaFormat.episodic,
+        reason: 'тип не сбрасывает формат');
   });
 
   test('серия без сезона нормализуется к S1 (CHECK)', () async {
     final cubit = create();
     addTearDown(cubit.close);
-    cubit.setMediaType(MediaType.series); // episodic
+    cubit.setFormat(MediaFormat.episodic);
     cubit.setTitle('Лост');
     cubit.setCurrentEpisode(9);
     await cubit.save();
@@ -145,12 +150,12 @@ void main() {
   test('single зануляет сезонные поля при сохранении', () async {
     final cubit = create();
     addTearDown(cubit.close);
-    cubit.setMediaType(MediaType.series); // сначала сериал
+    cubit.setFormat(MediaFormat.episodic); // сначала серийный
     cubit.setTitle('Аниме-фильм');
     cubit.setCurrentSeason(2);
     cubit.setCurrentEpisode(5);
     cubit.setTotalEpisodes(12);
-    cubit.setMediaType(MediaType.movie); // переключили на фильм -> single
+    cubit.setFormat(MediaFormat.single); // переключили на одиночный
     await cubit.save();
 
     final e = await onlyEntry();
@@ -175,7 +180,7 @@ void main() {
   test('«жду серии» снимается при переходе на «заброшено»', () async {
     final cubit = create();
     addTearDown(cubit.close);
-    cubit.setMediaType(MediaType.series);
+    cubit.setFormat(MediaFormat.episodic);
     cubit.setTitle('Атака титанов');
     cubit.setStatus(WatchStatus.paused);
     cubit.setUnfinishedReason(UnfinishedReason.waitingEpisodes);
@@ -188,7 +193,7 @@ void main() {
     final cubit = create();
     addTearDown(cubit.close);
     cubit.setTitle('Сериал');
-    cubit.setMediaType(MediaType.series);
+    cubit.setFormat(MediaFormat.episodic);
     cubit.setStatus(WatchStatus.dropped);
     cubit.setUnfinishedReason(UnfinishedReason.notForMe);
     await cubit.save();
@@ -210,7 +215,7 @@ void main() {
   test('edit: подгружает запись и сохраняет избранное/пересмотры', () async {
     final id = await repo.create(const MediaDraft(
       title: 'Во все тяжкие',
-      mediaType: MediaType.series,
+      mediaType: MediaType.movie,
       format: MediaFormat.episodic,
       status: WatchStatus.completed,
       isFavorite: true,

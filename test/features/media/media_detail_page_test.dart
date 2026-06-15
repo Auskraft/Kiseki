@@ -31,7 +31,7 @@ void main() {
     getIt.registerSingleton<TagRepository>(TagRepositoryImpl(db));
     entryId = await repo.create(const MediaDraft(
       title: 'Во все тяжкие',
-      mediaType: MediaType.series,
+      mediaType: MediaType.movie,
       format: MediaFormat.episodic,
       status: WatchStatus.completed,
     ));

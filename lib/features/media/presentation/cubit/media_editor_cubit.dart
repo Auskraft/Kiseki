@@ -329,11 +329,9 @@ class MediaEditorCubit extends Cubit<MediaEditorState> {
 
   void setTitle(String v) => emit(state.copyWith(title: v));
 
-  /// Смена типа сбрасывает `format` к дефолту типа (ADR-07: переопределяемо).
-  void setMediaType(MediaType type) => emit(state.copyWith(
-        mediaType: type,
-        format: type.defaultFormat,
-      ));
+  /// Смена вида НЕ трогает формат — он выбирается отдельно (Одиночный/
+  /// Серийный) и несёт эпизодность (ADR-07).
+  void setMediaType(MediaType type) => emit(state.copyWith(mediaType: type));
 
   void setFormat(MediaFormat format) => emit(state.copyWith(format: format));
 

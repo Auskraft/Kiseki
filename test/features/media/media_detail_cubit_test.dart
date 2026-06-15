@@ -29,7 +29,7 @@ void main() {
   }) =>
       MediaDraft(
         title: 'Во все тяжкие',
-        mediaType: MediaType.series,
+        mediaType: MediaType.movie,
         format: MediaFormat.episodic,
         status: status,
         isFavorite: favorite,
