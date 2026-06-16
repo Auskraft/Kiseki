@@ -120,10 +120,16 @@ class _EditorForm extends StatefulWidget {
   State<_EditorForm> createState() => _EditorFormState();
 }
 
-class _EditorFormState extends State<_EditorForm> {
+class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
   late final TextEditingController _title;
   late final TextEditingController _original;
   late final TextEditingController _note;
+
+  /// Фокус и ключ поля «Заметка» — оно последнее и многострочное, со счётчиком
+  /// символов, поэтому при наборе пряталось под клавиатурой. По фокусу
+  /// поднимаем его целиком в зону видимости (см. [_ensureNoteVisible]).
+  final FocusNode _noteFocus = FocusNode();
+  final GlobalKey _noteKey = GlobalKey();
 
   /// Раскрыт ли блок «Дополнительные параметры». В режиме редактирования —
   /// сразу раскрыт (там обычно уже есть данные).
@@ -137,14 +143,46 @@ class _EditorFormState extends State<_EditorForm> {
     _original = TextEditingController(text: s.originalTitle ?? '');
     _note = TextEditingController(text: s.note ?? '');
     _extraExpanded = s.mode == EditorMode.edit;
+    WidgetsBinding.instance.addObserver(this);
+    _noteFocus.addListener(_onNoteFocusChanged);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _title.dispose();
     _original.dispose();
     _note.dispose();
+    _noteFocus.dispose();
     super.dispose();
+  }
+
+  /// Фокус «Заметки» сменился: запас прокрутки снизу зависит от него (setState),
+  /// и поле сразу подскролливается (клавиатура могла уже быть открыта — переход
+  /// с другого поля).
+  void _onNoteFocusChanged() {
+    if (!mounted) return;
+    setState(() {}); // переключает нижний паддинг скролла (см. build)
+    _ensureNoteVisible();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // Клавиатура выезжает анимированно → viewInsets меняется по кадрам; пока
+    // «Заметка» в фокусе, докручиваем её над клавиатурой на каждом шаге
+    // (без магической задержки на окончание анимации).
+    if (_noteFocus.hasFocus) _ensureNoteVisible();
+  }
+
+  /// Скроллит поле «Заметка» (вместе со счётчиком) в видимую зону над
+  /// клавиатурой. Duration.zero — мгновенно на каждом шаге анимации инсетов:
+  /// визуально плавно, без наложения анимаций скролла.
+  void _ensureNoteVisible() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _noteKey.currentContext;
+      if (!mounted || ctx == null || !_noteFocus.hasFocus) return;
+      Scrollable.ensureVisible(ctx, duration: Duration.zero, alignment: 0.5);
+    });
   }
 
   /// Подтверждение отмены: диалог только при создании с непустым вводом.
@@ -280,7 +318,11 @@ class _EditorFormState extends State<_EditorForm> {
                     child: SingleChildScrollView(
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                      // При фокусе на «Заметке» — запас снизу, чтобы поле со
+                      // счётчиком встало над клавиатурой с отступом
+                      // (см. _ensureNoteVisible).
+                      padding: EdgeInsets.fromLTRB(
+                          16, 4, 16, _noteFocus.hasFocus ? 96 : 24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: _fields(context, state, cubit),
@@ -429,7 +471,9 @@ class _EditorFormState extends State<_EditorForm> {
         const SizedBox(height: 18),
         const EditorLabel('Заметка'),
         TextField(
+          key: _noteKey,
           controller: _note,
+          focusNode: _noteFocus,
           onChanged: cubit.setNote,
           onTapOutside: dismissKeyboardOnTapOutside,
           minLines: 3,
