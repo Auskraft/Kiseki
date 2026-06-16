@@ -1,20 +1,15 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/di/injector.dart';
 import '../../../../app/router/app_router.dart';
-import '../../../../core/catalog/tag_repository.dart';
 import '../../../../core/catalog/watch_status.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/skeletons.dart';
-import '../../../../dev/demo_seed.dart';
 import '../../domain/media_entry.dart';
-import '../../domain/media_repository.dart';
 import '../cubit/media_list_cubit.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/media_card.dart';
@@ -614,17 +609,6 @@ class _EmptyView extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: const Text('Добавить карточку'),
             ),
-            if (kDebugMode) ...[
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () => seedDemoData(
-                  getIt<MediaRepository>(),
-                  getIt<TagRepository>(),
-                ),
-                icon: const Icon(Icons.science_outlined),
-                label: const Text('Демо-данные (dev)'),
-              ),
-            ],
           ],
         ),
       ),

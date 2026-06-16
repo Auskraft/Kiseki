@@ -1,15 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../core/catalog/tag_repository.dart';
 import '../core/database/app_database.dart';
 import '../core/images/image_storage.dart';
 import '../core/theme/kiseki_theme_id.dart';
 import '../core/theme/kiseki_themes.dart';
-import '../dev/demo_seed.dart';
-import '../features/media/domain/media_query.dart';
 import '../features/media/domain/media_repository.dart';
 import 'db_recovery_screen.dart';
 import 'di/injector.dart';
@@ -57,18 +53,9 @@ class _AppBootstrapState extends State<AppBootstrap> {
       }
       return;
     }
-    // Здоровая БД: dev-сид (debug) + чистка файлов-сирот — здесь, а не в main(),
-    // чтобы не трогать повреждённую БД и чтобы шаги повторялись после Replace-all
-    // (дерево перемонтируется → новый AppBootstrap).
-    if (kDebugMode) {
-      try {
-        final repo = getIt<MediaRepository>();
-        final existing = await repo.watch(const MediaListQuery()).first;
-        if (existing.isEmpty) {
-          await seedDemoData(repo, getIt<TagRepository>());
-        }
-      } catch (_) {/* сид не критичен */}
-    }
+    // Здоровая БД: чистка файлов-сирот — здесь, а не в main(), чтобы не трогать
+    // повреждённую БД и чтобы шаг повторялся после Replace-all (дерево
+    // перемонтируется → новый AppBootstrap).
     unawaited(() async {
       try {
         await getIt<ImageStorage>()
