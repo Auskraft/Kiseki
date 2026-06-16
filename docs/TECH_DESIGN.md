@@ -99,6 +99,7 @@
 - **ADR-21. Вид медиа (`media_type`) — таксономия «категория + формат», подпись производная.** В форме карточки сначала выбирается **формат** (Одиночный/Серийный = `format`), затем **вид** из 10 категорий (`movie`/`anime`/`drama`/`cartoon`/`documentary`/`concert`/`tv_show`/`ova`/`ona`/`tv_play`). Пользовательская подпись = функция (категория, формат): `movie`+single → «Фильм», `movie`+episodic → «Сериал», `anime`+single → «Полнометражное аниме», `anime`+episodic → «Аниме-сериал» и т.д. (`MediaType.labelFor`; формат-независимая нейтральная подпись для фильтра — `MediaType.label`). Формат остаётся **независимым** полем (ADR-07): он гейтит блок серий и CHECK, а вид и формат не дублируют друг друга. Прежний код `media_type='series'` свёрнут в `movie`+`format='episodic'` (та же категория «Фильм/Сериал») миграцией **schemaVersion 1→2** (data-only `UPDATE`, структура схемы не менялась; host-тест в `app_database_test`, проверка на устройстве — за владельцем). *Отвергнуто: 20 плоских кодов «вид-с-форматом» — дублируют `format`, ломают фильтр-по-категории, удваивают вечные enum-коды.*
 - **ADR-22. Редактор карточки — модальный боттом-шит с прогрессивным раскрытием.** Создание/редактирование (экран 03) открывается `openMediaEditor` через `showModalBottomSheet(isScrollControlled, прозрачный фон)`, а НЕ go_router-роутом (маршруты `/editor`, `/item/:id/edit` удалены — согласуется с ADR-20: модалки живут на `Navigator`, не в реестре путей). Причина: воспроизводит дизайн-референс (`blood_pressure_diary`), а закрытие свайпом вниз / тапом по затемнению заменяет крестик (важно на iOS, где нет системной кнопки «назад»). Шапка минимальна: заголовок + **иконка-галочка** сохранения (крестика нет). Форма раскрывается прогрессивно: **Формат** → **Тип** → **Название** → сворачиваемый блок **«Дополнительные параметры»** (статус, оригинал, год, страна, обложка, оценка, теги, прогресс серий, причина, даты, заметка). Для этого `format`/`mediaType` в стейте редактора **nullable** (null = ещё не выбрано); `canSave` требует формат + вид + непустое название. Несохранённый ввод при закрытии — подтверждение через `PopScope` (как и системный «назад»). *Проверка свайпа-закрытия и клавиатуры на устройстве — за владельцем.*
 - **ADR-23. Жанры — словарь подсказок для тегов, не отдельная таблица.** Теги остаются общим **свободным** справочником ядра (`tags`, M:N). В редакторе: чипы тегов = только **популярные у пользователя** (по числу живых карточек, `watchAllWithCounts`) + уже выбранные; поле ввода даёт инлайн-подсказки из существующих тегов (переиспользование без дублей) **и** курированного словаря жанров (`kMediaGenres` — справочный const, как `kCountries`). Выбранный жанр становится обычным тегом. *Отвергнуто (на итерацию 1): нормализованная схема `genres`/`genre_media_type` из внешнего черновика — дублирует свободные теги ядра; структурные жанры с фильтром по типу можно добавить позже доменной фичей, не трогая модель тегов. Типы медиа при этом — `MediaType` enum (ADR-21), не таблица БД.*
+- **ADR-24. Второй домен «Жидкость для вейпа» — обкатка дизайна core+domain (M8).** Первый домен сверх медиа добавлен по ADR-02 **без изменений ядра, медиа и конвейера картинок**: `CatalogDomain += vape`, новая таблица `vape_items` 1:1 к ядру, `schemaVersion 2→3` (аддитивный `createTable`). Общие поля — из ядра: `title` = название вкуса, `rating` = общая оценка (0–100), `note` = комментарий, `started_at` = дата добавления (точность «день», дефолт сегодня), `images` = фото упаковки (тот же конвейер). Вейп-специфика — в `vape_items` (бренд, тип/крепость никотина, категория/описание вкуса, под-уровни, туглы). **Крепость никотина — TEXT** (выбор из списка по типу `kNicotineStrengths`): в таблице вариантов есть диапазоны («1,5-3», «35-50»), поэтому не число. Под-уровни (сладость/холодок/насыщенность) и общая оценка переиспользуют слайдер `RatingInput` (0–100, показ /10). Ядровой `status` для vape не используется (всегда `plan`). UI: редактор-шит и экран детали (`/vape/:id`) в стиле медиа, список в Картотеке + фильтр «можно покупать снова», добавление через speed-dial Главной; в Календаре домен неактивен. Удаление — мягкое (`deleted_at`); отдельной корзины для vape пока нет (обобщение корзины на домены — позже). FTS покрывает vape бесплатно (триггеры ядра по `title`/`note`). *Отвергнуто: единая generic-таблица доменов — теряет типобезопасность/FK/CHECK (ADR-02).*
 
 ---
 
@@ -108,6 +109,7 @@
 
 ```
 catalog_items (ЯДРО) 1───1 media_items (домен)        PK media_items.item_id = FK → catalog_items.id, CASCADE
+catalog_items (ЯДРО) 1───1 vape_items  (домен)        PK vape_items.item_id  = FK → catalog_items.id, CASCADE
 catalog_items        1───N images                      images.item_id → catalog_items.id, CASCADE
 catalog_items        M───N tags  (через item_tags)     обе стороны CASCADE
 catalog_fts (FTS5)   ←── триггеры по item_id (UUID)
@@ -161,6 +163,22 @@ CREATE TABLE media_items (
           AND total_seasons IS NULL AND total_episodes IS NULL)),
   -- серия требует сезон (для одно-сезонных UI пишет season=1, см. §6.5):
   CHECK (current_episode IS NULL OR current_season IS NOT NULL)
+);
+
+-- ДОМЕН: ЖИДКОСТЬ ДЛЯ ВЕЙПА (1:1 к ядру, ADR-24)
+CREATE TABLE vape_items (
+  item_id            TEXT    NOT NULL PRIMARY KEY
+                       REFERENCES catalog_items(id) ON DELETE CASCADE,
+  brand              TEXT    NOT NULL CHECK (length(brand) BETWEEN 1 AND 30),
+  nicotine_type      TEXT    NOT NULL,                   -- salt|alkaline|hybrid
+  nicotine_strength  TEXT    NOT NULL,                   -- значение из списка по типу (есть диапазоны)
+  flavor_category    TEXT,                               -- fruits|berries|drinks|desserts|tobacco|menthol|mixes
+  flavor_description TEXT,                               -- ≤150 (валидация в UI)
+  sweetness          INTEGER,                            -- 0–100 (слайдер /10)
+  coolness           INTEGER,                            -- 0–100
+  richness           INTEGER,                            -- 0–100
+  can_rebuy          INTEGER NOT NULL DEFAULT 0 CHECK (can_rebuy IN (0,1)),
+  flavor_fades       INTEGER NOT NULL DEFAULT 0 CHECK (flavor_fades IN (0,1))
 );
 
 -- КАРТИНКИ (1:N, общие для всех доменов)
@@ -233,7 +251,7 @@ CREATE VIRTUAL TABLE catalog_fts USING fts5(
 
 ### 4.6. Миграции
 
-- `schemaVersion = 2` (на старте был `1`; v2 — сворачивание `media_type='series'`→`movie`, ADR-21, data-only); инкремент на каждое изменение схемы.
+- `schemaVersion = 3` (1→2 — сворачивание `media_type='series'`→`movie`, ADR-21, data-only; **2→3 — новый домен `vape_items`**, аддитивный `createTable`, ADR-24); инкремент на каждое изменение схемы.
 - `onCreate`: `m.createAll()` + сырой SQL для FTS5 и триггеров + доп. индексы.
 - `onUpgrade`: пошагово `if (from < N)`, **строго аддитивно** (`addColumn` nullable/с DEFAULT, `createTable`). Сложные ALTER (rename/тип) — через временную колонку → backfill → переключение, внутри транзакции миграции.
 - `beforeOpen`: `PRAGMA foreign_keys = ON`.
