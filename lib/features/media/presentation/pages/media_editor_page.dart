@@ -377,6 +377,8 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
           controller: _title,
           onChanged: cubit.setTitle,
           onTapOutside: dismissKeyboardOnTapOutside,
+          maxLength: 100,
+          buildCounter: coloredCharCounter,
           textCapitalization: TextCapitalization.sentences,
           style: TextStyle(
             fontSize: 14.5 * uiScale,
@@ -479,6 +481,7 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
           minLines: 3,
           maxLines: 6,
           maxLength: 256,
+          buildCounter: coloredCharCounter,
           textCapitalization: TextCapitalization.sentences,
           style: TextStyle(
             fontSize: 13.5 * uiScale,
@@ -738,6 +741,8 @@ class _CoverInfoRow extends StatelessWidget {
                 controller: originalController,
                 onChanged: onOriginalChanged,
                 onTapOutside: dismissKeyboardOnTapOutside,
+                maxLength: 100,
+                buildCounter: coloredCharCounter,
                 style: TextStyle(
                   fontSize: 14 * uiScale,
                   fontStyle: FontStyle.italic,

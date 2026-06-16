@@ -128,6 +128,35 @@ InputDecoration editorFieldDecoration(
 void dismissKeyboardOnTapOutside(PointerDownEvent _) =>
     FocusManager.instance.primaryFocus?.unfocus();
 
+/// Цветной счётчик символов для полей редактора (подключается в
+/// `TextField.buildCounter`, вызывается на каждое изменение → цвет реактивный).
+/// Цвет — по заполнению: зелёный при пустом поле, краснеет к лимиту, 10 градаций
+/// палитры оценки (`scoreColor`). Функционал-предупреждение как в дневнике
+/// давления, но 10-ступенчатый.
+Widget coloredCharCounter(
+  BuildContext context, {
+  required int currentLength,
+  required int? maxLength,
+  required bool isFocused,
+}) {
+  final tk = context.tokens;
+  final max = maxLength ?? 0;
+  final fill = max == 0 ? 0.0 : (currentLength / max).clamp(0.0, 1.0);
+  // Инверсия: пусто → 100 (зелёный конец рампы), у лимита → 0 (красный).
+  final color = tk.scoreColor(((1 - fill) * 100).round());
+  return Padding(
+    padding: const EdgeInsets.only(top: 3, right: 2),
+    child: Text(
+      '$currentLength/$max',
+      style: TextStyle(
+        fontSize: 11 * uiScale,
+        fontWeight: FontWeight.w700,
+        color: color,
+      ),
+    ),
+  );
+}
+
 /// Сегментированный выбор (равные сегменты). Активный — заливка primary.
 /// `value == null` — ни один сегмент не выбран (прогрессивная форма).
 class EditorSegments<T> extends StatelessWidget {
