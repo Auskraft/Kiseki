@@ -354,10 +354,11 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
         ],
       ),
       const SizedBox(height: 14),
-      // Фото упаковки + Тип никотина — одной строкой (компоновка как у обложки
-      // в «Добавить просмотр»): слева фото, справа тип.
+      // Фото упаковки + тип/крепость никотина — одной строкой (компоновка как
+      // блок обложки в «Добавить просмотр»): слева фото, справа сегменты типа
+      // по верхней границе фото, под ними — крепость.
       Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _CoverThumb(
             coverImageId: s.coverImageId,
@@ -370,7 +371,6 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const EditorLabel('Тип никотина', required: true),
                 EditorSegments<NicotineType>(
                   value: s.nicotineType,
                   onChanged: cubit.setNicotineType,
@@ -380,27 +380,27 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
                     (NicotineType.hybrid, 'Гибрид'),
                   ],
                 ),
+                if (s.nicotineType != null) ...[
+                  const SizedBox(height: 12),
+                  const EditorLabel('Крепость, мг/мл', required: true),
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      for (final v in strengths)
+                        EditorChip(
+                          label: v,
+                          selected: s.nicotineStrength == v,
+                          onTap: () => cubit.setNicotineStrength(v),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
         ],
       ),
-      if (s.nicotineType != null) ...[
-        const SizedBox(height: 14),
-        const EditorLabel('Крепость, мг/мл', required: true),
-        Wrap(
-          spacing: 7,
-          runSpacing: 7,
-          children: [
-            for (final v in strengths)
-              EditorChip(
-                label: v,
-                selected: s.nicotineStrength == v,
-                onTap: () => cubit.setNicotineStrength(v),
-              ),
-          ],
-        ),
-      ],
       const SizedBox(height: 14),
       const EditorLabel('Дата добавления'),
       _AddedDateField(value: s.addedAt, onChanged: cubit.setAddedAt),
