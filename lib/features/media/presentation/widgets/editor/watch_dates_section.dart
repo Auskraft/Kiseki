@@ -308,33 +308,25 @@ class _RewatchCounter extends StatelessWidget {
     final tk = context.tokens;
     final color = _color(tk);
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
       decoration: BoxDecoration(
         color: tk.surface,
         borderRadius: BorderRadius.circular(AppRadii.sm),
         border: Border.all(color: tk.outlineSoft),
       ),
+      // mainAxisSize.min — блок по контенту (узкий), не на всю ширину.
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Пересмотры',
-                  style: TextStyle(
-                    fontSize: 13 * uiScale,
-                    fontWeight: FontWeight.w600,
-                    color: tk.onBg,
-                  ),
-                ),
-                Text(
-                  count == 0 ? 'не пересматривал' : 'раз: $count',
-                  style: TextStyle(fontSize: 11 * uiScale, color: tk.onMuted),
-                ),
-              ],
+          Text(
+            'Пересмотры',
+            style: TextStyle(
+              fontSize: 13 * uiScale,
+              fontWeight: FontWeight.w600,
+              color: tk.onBg,
             ),
           ),
+          const SizedBox(width: 10),
           _StepBtn(
             icon: Icons.remove_rounded,
             onTap: count > 0 ? () => onChanged(count - 1) : null,
