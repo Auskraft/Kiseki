@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/media/presentation/pages/calendar_page.dart';
+import '../../features/media/presentation/pages/kartoteka_page.dart';
 import '../../features/media/presentation/pages/main_screen.dart';
 import '../../features/media/presentation/pages/media_editor_page.dart';
 import '../../features/media/presentation/pages/settings_page.dart';
 import 'capsule_nav_bar.dart';
 import 'classic_nav_bar.dart';
-import 'coming_soon_page.dart';
 import 'floating_nav_bar.dart';
 import 'menu_icons.dart';
 import 'add_speed_dial.dart';
@@ -46,10 +46,7 @@ class _MainShellState extends State<MainShell> {
     final builders = <WidgetBuilder>[
       (_) => const MainScreen(),
       (_) => const CalendarPage(),
-      (_) => const ComingSoonPage(
-            title: 'Картотека',
-            icon: Icons.grid_view_rounded,
-          ),
+      (_) => const KartotekaPage(),
       (_) => const SettingsPage(embedded: true),
     ];
 

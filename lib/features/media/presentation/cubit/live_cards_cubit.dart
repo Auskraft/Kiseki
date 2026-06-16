@@ -7,9 +7,9 @@ import '../../domain/media_entry.dart';
 import '../../domain/media_query.dart';
 import '../../domain/media_repository.dart';
 
-/// Состояние календаря: все живые карточки (без фильтра Главной) + флаг загрузки.
-class CalendarState extends Equatable {
-  const CalendarState({this.entries = const [], this.loading = true});
+/// Снимок всех живых карточек (без фильтра/поиска) + флаг загрузки.
+class LiveCardsState extends Equatable {
+  const LiveCardsState({this.entries = const [], this.loading = true});
 
   final List<MediaEntry> entries;
   final bool loading;
@@ -19,12 +19,12 @@ class CalendarState extends Equatable {
 }
 
 /// Реактивно следит за ВСЕМИ живыми карточками (пустой `MediaListQuery` =
-/// без фильтров/поиска) — календарю нужен полный набор, не отфильтрованный
-/// список Главной. Собственный кубит, чтобы не зависеть от `MediaListCubit`.
-class CalendarCubit extends Cubit<CalendarState> {
-  CalendarCubit(this._repo) : super(const CalendarState()) {
+/// без фильтров). Общий для экранов, которым нужен полный набор, не зависящий
+/// от фильтра Главной (Календарь, Картотека).
+class LiveCardsCubit extends Cubit<LiveCardsState> {
+  LiveCardsCubit(this._repo) : super(const LiveCardsState()) {
     _sub = _repo.watch(const MediaListQuery()).listen(
-          (items) => emit(CalendarState(entries: items, loading: false)),
+          (items) => emit(LiveCardsState(entries: items, loading: false)),
         );
   }
 

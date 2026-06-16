@@ -13,7 +13,8 @@ import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/status_visuals.dart';
 import '../../domain/media_entry.dart';
 import '../../domain/media_repository.dart';
-import '../cubit/calendar_cubit.dart';
+import '../cubit/live_cards_cubit.dart';
+import '../widgets/domain_dropdown.dart';
 
 const List<String> _months = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', //
@@ -45,9 +46,6 @@ String _ymLabel(int ym) => '${_months[_ymMonth(ym) - 1]} ${_ymYear(ym)}';
   return (start: start, end: max(end, start));
 }
 
-/// Домен картотеки для календаря. «Чтение» — будущая фича (заглушка).
-enum _Domain { watch, reading }
-
 enum _View { calendar, gantt }
 
 /// Вкладка «Календарь»: помесячный таймлайн просмотров (цвет = статус) +
@@ -58,7 +56,7 @@ class CalendarPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => CalendarCubit(getIt<MediaRepository>()),
+      create: (_) => LiveCardsCubit(getIt<MediaRepository>()),
       child: const _CalendarView(),
     );
   }
@@ -72,7 +70,7 @@ class _CalendarView extends StatefulWidget {
 }
 
 class _CalendarViewState extends State<_CalendarView> {
-  _Domain _domain = _Domain.watch;
+  MediaDomain _domain = MediaDomain.watch;
   _View _view = _View.calendar;
 
   static const double _titleWidth = 116;
@@ -86,8 +84,8 @@ class _CalendarViewState extends State<_CalendarView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _Header(domain: _domain, onDomain: (d) => setState(() => _domain = d)),
-            if (_domain == _Domain.reading)
-              const Expanded(child: _ReadingStub())
+            if (_domain == MediaDomain.reading)
+              const Expanded(child: ReadingComingSoon())
             else
               Expanded(child: _watchBody(context)),
           ],
@@ -97,7 +95,7 @@ class _CalendarViewState extends State<_CalendarView> {
   }
 
   Widget _watchBody(BuildContext context) {
-    return BlocBuilder<CalendarCubit, CalendarState>(
+    return BlocBuilder<LiveCardsCubit, LiveCardsState>(
       builder: (context, state) {
         if (state.loading) {
           return const Center(child: CircularProgressIndicator());
@@ -212,8 +210,8 @@ class _CalendarViewState extends State<_CalendarView> {
 class _Header extends StatelessWidget {
   const _Header({required this.domain, required this.onDomain});
 
-  final _Domain domain;
-  final ValueChanged<_Domain> onDomain;
+  final MediaDomain domain;
+  final ValueChanged<MediaDomain> onDomain;
 
   @override
   Widget build(BuildContext context) {
@@ -224,66 +222,8 @@ class _Header extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(child: Text('Календарь', style: text.displaySmall)),
-          _DomainDropdown(domain: domain, onChanged: onDomain),
+          DomainDropdown(domain: domain, onChanged: onDomain),
         ],
-      ),
-    );
-  }
-}
-
-class _DomainDropdown extends StatelessWidget {
-  const _DomainDropdown({required this.domain, required this.onChanged});
-
-  final _Domain domain;
-  final ValueChanged<_Domain> onChanged;
-
-  String _label(_Domain d) => d == _Domain.watch ? 'Просмотр' : 'Чтение';
-  IconData _icon(_Domain d) =>
-      d == _Domain.watch ? Icons.smart_display_rounded : Icons.menu_book_rounded;
-
-  @override
-  Widget build(BuildContext context) {
-    final tk = context.tokens;
-    return PopupMenuButton<_Domain>(
-      initialValue: domain,
-      tooltip: 'Раздел',
-      onSelected: onChanged,
-      itemBuilder: (_) => [
-        for (final d in _Domain.values)
-          PopupMenuItem<_Domain>(
-            value: d,
-            child: Row(
-              children: [
-                Icon(_icon(d), size: 19, color: tk.onMuted),
-                const SizedBox(width: 10),
-                Text(_label(d)),
-              ],
-            ),
-          ),
-      ],
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-        decoration: BoxDecoration(
-          color: tk.surface2,
-          borderRadius: BorderRadius.circular(AppRadii.pill),
-          border: Border.all(color: tk.outlineSoft),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(_icon(domain), size: 17, color: tk.primary),
-            const SizedBox(width: 7),
-            Text(
-              _label(domain),
-              style: TextStyle(
-                fontSize: 13 * uiScale,
-                fontWeight: FontWeight.w700,
-                color: tk.onBg,
-              ),
-            ),
-            Icon(Icons.arrow_drop_down_rounded, size: 20, color: tk.onMuted),
-          ],
-        ),
       ),
     );
   }
@@ -623,7 +563,7 @@ class _GanttRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────── без дат / пусто / заглушка ──────────────────────
+// ─────────────────────── без дат / пусто ─────────────────────────────────
 
 class _UndatedSection extends StatelessWidget {
   const _UndatedSection({required this.entries});
@@ -686,41 +626,6 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'Добавь просмотры с датами — они появятся на таймлайне.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13 * uiScale, color: tk.onMuted),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReadingStub extends StatelessWidget {
-  const _ReadingStub();
-
-  @override
-  Widget build(BuildContext context) {
-    final tk = context.tokens;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.menu_book_rounded, size: 48, color: tk.onFaint),
-            const SizedBox(height: 14),
-            Text(
-              'Чтение — скоро',
-              style: TextStyle(
-                fontSize: 15 * uiScale,
-                fontWeight: FontWeight.w700,
-                color: tk.onBg,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Книги и манга появятся отдельным разделом картотеки.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13 * uiScale, color: tk.onMuted),
             ),
