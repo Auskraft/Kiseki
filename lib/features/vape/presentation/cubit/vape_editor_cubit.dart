@@ -220,12 +220,14 @@ class VapeEditorCubit extends Cubit<VapeEditorState> {
   void setBrand(String v) => emit(state.copyWith(brand: v));
   void setTitle(String v) => emit(state.copyWith(title: v));
 
-  /// Смена типа: если текущая крепость не входит в список нового типа — сбросить.
+  /// Смена типа: если текущая крепость входит в список нового типа — оставляем,
+  /// иначе ставим первое значение (слайдеру крепости нужна валидная позиция).
   void setNicotineType(NicotineType type) {
-    final keep = nicotineStrengthsFor(type).contains(state.nicotineStrength);
+    final opts = nicotineStrengthsFor(type);
+    final keep = opts.contains(state.nicotineStrength);
     emit(state.copyWith(
       nicotineType: type,
-      nicotineStrength: keep ? null : () => null,
+      nicotineStrength: keep ? null : () => opts.isEmpty ? null : opts.first,
     ));
   }
 

@@ -57,12 +57,13 @@ void main() {
 
     expect(find.text('Добавить жидкость'), findsOneWidget);
 
-    // Тип → чипы крепости → «20». До ввода текста: нет фокуса (pumpAndSettle ок;
+    // Тип → слайдер крепости. До ввода текста нет фокуса (pumpAndSettle ок;
     // фокус текстового поля держит таймер курсора и вешает pumpAndSettle).
     await tester.tap(find.text('Солевой'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('20'));
-    await tester.tap(find.text('20'));
+    // Крепость — слайдер; тянем вправо до упора → последнее значение salt ('30').
+    await tester.drag(
+        find.byKey(const Key('vape-strength-slider')), const Offset(1000, 0));
     await tester.pumpAndSettle();
 
     // Бренд (0) + Название вкуса (1) — первые два видимых поля; вводим в конце.
@@ -84,6 +85,6 @@ void main() {
     expect(list, hasLength(1));
     expect(list.first.title, 'Манго-лёд');
     expect(list.first.brand, 'BrandX');
-    expect(list.first.nicotineStrength, '20');
+    expect(list.first.nicotineStrength, '30');
   });
 }

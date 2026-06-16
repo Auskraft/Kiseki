@@ -354,52 +354,47 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
         ],
       ),
       const SizedBox(height: 14),
-      // Фото упаковки + тип/крепость никотина — одной строкой (компоновка как
-      // блок обложки в «Добавить просмотр»): слева фото, справа сегменты типа
-      // по верхней границе фото, под ними — крепость.
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CoverThumb(
-            coverImageId: s.coverImageId,
-            processing: s.processingImage,
-            onPick: () => _pickCover(context),
-            onRemove: cubit.removeCover,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                EditorSegments<NicotineType>(
-                  value: s.nicotineType,
-                  onChanged: cubit.setNicotineType,
-                  options: const [
-                    (NicotineType.salt, 'Солевой'),
-                    (NicotineType.alkaline, 'Щелочной'),
-                    (NicotineType.hybrid, 'Гибрид'),
-                  ],
-                ),
-                if (s.nicotineType != null) ...[
-                  const SizedBox(height: 12),
-                  const EditorLabel('Крепость, мг/мл', required: true),
-                  Wrap(
-                    spacing: 7,
-                    runSpacing: 7,
-                    children: [
-                      for (final v in strengths)
-                        EditorChip(
-                          label: v,
-                          selected: s.nicotineStrength == v,
-                          onTap: () => cubit.setNicotineStrength(v),
-                        ),
+      // Фото упаковки + тип/крепость никотина — одной строкой. Фото слева
+      // растягивается по высоте правого блока (IntrinsicHeight + stretch): низ
+      // фото = низ легенды крепости. Сегменты типа — по верхней границе фото.
+      IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _CoverThumb(
+              coverImageId: s.coverImageId,
+              processing: s.processingImage,
+              onPick: () => _pickCover(context),
+              onRemove: cubit.removeCover,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  EditorSegments<NicotineType>(
+                    value: s.nicotineType,
+                    onChanged: cubit.setNicotineType,
+                    options: const [
+                      (NicotineType.salt, 'Солевой'),
+                      (NicotineType.alkaline, 'Щелочной'),
+                      (NicotineType.hybrid, 'Гибрид'),
                     ],
                   ),
+                  if (s.nicotineType != null) ...[
+                    const SizedBox(height: 10),
+                    const EditorLabel('Крепость, мг/мл', required: true),
+                    _StrengthSlider(
+                      options: strengths,
+                      value: s.nicotineStrength,
+                      onChanged: cubit.setNicotineStrength,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       const SizedBox(height: 14),
       const EditorLabel('Дата добавления'),
@@ -732,6 +727,80 @@ class _ToggleRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ──────────────── слайдер крепости (дискретные значения + легенда) ────────
+
+/// Крепость никотина выбором по дискретным значениям списка типа: слайдер
+/// снапается к делениям (позиция = индекс в [options]), под ним — легенда-
+/// подсказка со значениями (выбранное — акцентом). Значение хранится строкой.
+class _StrengthSlider extends StatelessWidget {
+  const _StrengthSlider({
+    required this.options,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final List<String> options;
+  final String? value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    final n = options.length;
+    final idx = value == null ? 0 : options.indexOf(value!).clamp(0, n - 1);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 38,
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 4,
+              activeTrackColor: tk.primary,
+              inactiveTrackColor: tk.surface3,
+              thumbColor: tk.primary,
+              overlayColor: tk.primary.withValues(alpha: 0.14),
+              activeTickMarkColor: tk.onPrimary,
+              inactiveTickMarkColor: tk.onFaint,
+              valueIndicatorColor: tk.primary,
+              valueIndicatorTextStyle:
+                  TextStyle(color: tk.onPrimary, fontWeight: FontWeight.w700),
+            ),
+            child: Slider(
+              key: const Key('vape-strength-slider'),
+              value: idx.toDouble(),
+              max: (n - 1).toDouble(),
+              divisions: n > 1 ? n - 1 : null,
+              label: options[idx],
+              onChanged: (v) {
+                HapticFeedback.selectionClick();
+                onChanged(options[v.round().clamp(0, n - 1)]);
+              },
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final (i, opt) in options.indexed)
+                Text(
+                  opt,
+                  style: TextStyle(
+                    fontSize: 10.5 * uiScale,
+                    fontWeight: i == idx ? FontWeight.w800 : FontWeight.w600,
+                    color: i == idx ? tk.primary : tk.onFaint,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
