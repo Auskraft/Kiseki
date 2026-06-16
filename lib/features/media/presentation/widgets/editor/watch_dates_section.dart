@@ -59,7 +59,6 @@ class WatchDatesSection extends StatelessWidget {
         ),
         const SizedBox(height: 9),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
               child: _DateBlock(

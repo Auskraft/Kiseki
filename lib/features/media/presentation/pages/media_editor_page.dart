@@ -277,10 +277,12 @@ class _EditorFormState extends State<_EditorForm> {
                     onSave: cubit.save,
                   ),
                   Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
+                    child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                      children: _fields(context, state, cubit),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: _fields(context, state, cubit),
+                      ),
                     ),
                   ),
                 ],

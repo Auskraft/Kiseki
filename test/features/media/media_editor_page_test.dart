@@ -96,6 +96,31 @@ void main() {
     expect(items.map((e) => e.title), contains('Тестовая карточка'));
   });
 
+  testWidgets('«Дополнительные параметры» раскрывают вложенный контент',
+      (tester) async {
+    await tester.pumpWidget(host());
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Одиночный'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Фильм'));
+    await tester.pumpAndSettle();
+
+    // Свёрнуто: вложенного контента ещё нет.
+    expect(find.text('Дополнительные параметры'), findsOneWidget);
+    expect(find.text('Даты просмотров'), findsNothing);
+
+    // Тап по заголовку раскрывает секцию — контент появляется.
+    await tester.ensureVisible(find.text('Дополнительные параметры'));
+    await tester.tap(find.text('Дополнительные параметры'));
+    await tester.pumpAndSettle();
+    expect(find.text('Даты просмотров'), findsOneWidget);
+    expect(find.text('Пересмотры'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('несохранённый ввод спрашивает подтверждение при закрытии',
       (tester) async {
     await tester.pumpWidget(host());
