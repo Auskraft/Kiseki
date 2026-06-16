@@ -16,6 +16,8 @@ import '../../core/images/image_storage.dart';
 import '../../core/images/media_paths.dart';
 import '../../features/media/data/media_repository_impl.dart';
 import '../../features/media/domain/media_repository.dart';
+import '../../features/vape/data/vape_repository_impl.dart';
+import '../../features/vape/domain/vape_repository.dart';
 
 /// Глобальный service-locator (ADR-13: get_it + ручной composition root).
 final GetIt getIt = GetIt.instance;
@@ -45,6 +47,9 @@ Future<void> configureDependencies() async {
   );
   getIt.registerLazySingleton<MediaRepository>(
     () => MediaRepositoryImpl(getIt<AppDatabase>()),
+  );
+  getIt.registerLazySingleton<VapeRepository>(
+    () => VapeRepositoryImpl(getIt<AppDatabase>()),
   );
 
   // Бэкап на Я.Диск (Этап F).

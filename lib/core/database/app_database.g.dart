@@ -1731,6 +1731,718 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
   }
 }
 
+class $VapeItemsTable extends VapeItems
+    with TableInfo<$VapeItemsTable, VapeItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VapeItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<String> itemId = GeneratedColumn<String>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES catalog_items (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _brandMeta = const VerificationMeta('brand');
+  @override
+  late final GeneratedColumn<String> brand = GeneratedColumn<String>(
+    'brand',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 30,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<NicotineType, String>
+  nicotineType = GeneratedColumn<String>(
+    'nicotine_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<NicotineType>($VapeItemsTable.$converternicotineType);
+  static const VerificationMeta _nicotineStrengthMeta = const VerificationMeta(
+    'nicotineStrength',
+  );
+  @override
+  late final GeneratedColumn<String> nicotineStrength = GeneratedColumn<String>(
+    'nicotine_strength',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<FlavorCategory?, String>
+  flavorCategory = GeneratedColumn<String>(
+    'flavor_category',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<FlavorCategory?>($VapeItemsTable.$converterflavorCategoryn);
+  static const VerificationMeta _flavorDescriptionMeta = const VerificationMeta(
+    'flavorDescription',
+  );
+  @override
+  late final GeneratedColumn<String> flavorDescription =
+      GeneratedColumn<String>(
+        'flavor_description',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _sweetnessMeta = const VerificationMeta(
+    'sweetness',
+  );
+  @override
+  late final GeneratedColumn<int> sweetness = GeneratedColumn<int>(
+    'sweetness',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _coolnessMeta = const VerificationMeta(
+    'coolness',
+  );
+  @override
+  late final GeneratedColumn<int> coolness = GeneratedColumn<int>(
+    'coolness',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _richnessMeta = const VerificationMeta(
+    'richness',
+  );
+  @override
+  late final GeneratedColumn<int> richness = GeneratedColumn<int>(
+    'richness',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _canRebuyMeta = const VerificationMeta(
+    'canRebuy',
+  );
+  @override
+  late final GeneratedColumn<bool> canRebuy = GeneratedColumn<bool>(
+    'can_rebuy',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("can_rebuy" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _flavorFadesMeta = const VerificationMeta(
+    'flavorFades',
+  );
+  @override
+  late final GeneratedColumn<bool> flavorFades = GeneratedColumn<bool>(
+    'flavor_fades',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("flavor_fades" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    itemId,
+    brand,
+    nicotineType,
+    nicotineStrength,
+    flavorCategory,
+    flavorDescription,
+    sweetness,
+    coolness,
+    richness,
+    canRebuy,
+    flavorFades,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vape_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VapeItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('brand')) {
+      context.handle(
+        _brandMeta,
+        brand.isAcceptableOrUnknown(data['brand']!, _brandMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_brandMeta);
+    }
+    if (data.containsKey('nicotine_strength')) {
+      context.handle(
+        _nicotineStrengthMeta,
+        nicotineStrength.isAcceptableOrUnknown(
+          data['nicotine_strength']!,
+          _nicotineStrengthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_nicotineStrengthMeta);
+    }
+    if (data.containsKey('flavor_description')) {
+      context.handle(
+        _flavorDescriptionMeta,
+        flavorDescription.isAcceptableOrUnknown(
+          data['flavor_description']!,
+          _flavorDescriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sweetness')) {
+      context.handle(
+        _sweetnessMeta,
+        sweetness.isAcceptableOrUnknown(data['sweetness']!, _sweetnessMeta),
+      );
+    }
+    if (data.containsKey('coolness')) {
+      context.handle(
+        _coolnessMeta,
+        coolness.isAcceptableOrUnknown(data['coolness']!, _coolnessMeta),
+      );
+    }
+    if (data.containsKey('richness')) {
+      context.handle(
+        _richnessMeta,
+        richness.isAcceptableOrUnknown(data['richness']!, _richnessMeta),
+      );
+    }
+    if (data.containsKey('can_rebuy')) {
+      context.handle(
+        _canRebuyMeta,
+        canRebuy.isAcceptableOrUnknown(data['can_rebuy']!, _canRebuyMeta),
+      );
+    }
+    if (data.containsKey('flavor_fades')) {
+      context.handle(
+        _flavorFadesMeta,
+        flavorFades.isAcceptableOrUnknown(
+          data['flavor_fades']!,
+          _flavorFadesMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {itemId};
+  @override
+  VapeItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VapeItem(
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_id'],
+      )!,
+      brand: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}brand'],
+      )!,
+      nicotineType: $VapeItemsTable.$converternicotineType.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}nicotine_type'],
+        )!,
+      ),
+      nicotineStrength: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nicotine_strength'],
+      )!,
+      flavorCategory: $VapeItemsTable.$converterflavorCategoryn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}flavor_category'],
+        ),
+      ),
+      flavorDescription: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}flavor_description'],
+      ),
+      sweetness: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sweetness'],
+      ),
+      coolness: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}coolness'],
+      ),
+      richness: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}richness'],
+      ),
+      canRebuy: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}can_rebuy'],
+      )!,
+      flavorFades: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}flavor_fades'],
+      )!,
+    );
+  }
+
+  @override
+  $VapeItemsTable createAlias(String alias) {
+    return $VapeItemsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<NicotineType, String> $converternicotineType =
+      const NicotineTypeConverter();
+  static TypeConverter<FlavorCategory, String> $converterflavorCategory =
+      const FlavorCategoryConverter();
+  static TypeConverter<FlavorCategory?, String?> $converterflavorCategoryn =
+      NullAwareTypeConverter.wrap($converterflavorCategory);
+}
+
+class VapeItem extends DataClass implements Insertable<VapeItem> {
+  final String itemId;
+
+  /// Бренд (≤30) — обязателен.
+  final String brand;
+  final NicotineType nicotineType;
+
+  /// Крепость (мг/мл) — значение из списка по типу; строка (есть диапазоны).
+  final String nicotineStrength;
+  final FlavorCategory? flavorCategory;
+
+  /// Описание вкуса (≤150, валидация в UI).
+  final String? flavorDescription;
+
+  /// Уровни 0–100 (слайдер «оценки» /10): сладость / холодок / насыщенность.
+  final int? sweetness;
+  final int? coolness;
+  final int? richness;
+
+  /// Можно покупать снова / мылится ли вкус.
+  final bool canRebuy;
+  final bool flavorFades;
+  const VapeItem({
+    required this.itemId,
+    required this.brand,
+    required this.nicotineType,
+    required this.nicotineStrength,
+    this.flavorCategory,
+    this.flavorDescription,
+    this.sweetness,
+    this.coolness,
+    this.richness,
+    required this.canRebuy,
+    required this.flavorFades,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['item_id'] = Variable<String>(itemId);
+    map['brand'] = Variable<String>(brand);
+    {
+      map['nicotine_type'] = Variable<String>(
+        $VapeItemsTable.$converternicotineType.toSql(nicotineType),
+      );
+    }
+    map['nicotine_strength'] = Variable<String>(nicotineStrength);
+    if (!nullToAbsent || flavorCategory != null) {
+      map['flavor_category'] = Variable<String>(
+        $VapeItemsTable.$converterflavorCategoryn.toSql(flavorCategory),
+      );
+    }
+    if (!nullToAbsent || flavorDescription != null) {
+      map['flavor_description'] = Variable<String>(flavorDescription);
+    }
+    if (!nullToAbsent || sweetness != null) {
+      map['sweetness'] = Variable<int>(sweetness);
+    }
+    if (!nullToAbsent || coolness != null) {
+      map['coolness'] = Variable<int>(coolness);
+    }
+    if (!nullToAbsent || richness != null) {
+      map['richness'] = Variable<int>(richness);
+    }
+    map['can_rebuy'] = Variable<bool>(canRebuy);
+    map['flavor_fades'] = Variable<bool>(flavorFades);
+    return map;
+  }
+
+  VapeItemsCompanion toCompanion(bool nullToAbsent) {
+    return VapeItemsCompanion(
+      itemId: Value(itemId),
+      brand: Value(brand),
+      nicotineType: Value(nicotineType),
+      nicotineStrength: Value(nicotineStrength),
+      flavorCategory: flavorCategory == null && nullToAbsent
+          ? const Value.absent()
+          : Value(flavorCategory),
+      flavorDescription: flavorDescription == null && nullToAbsent
+          ? const Value.absent()
+          : Value(flavorDescription),
+      sweetness: sweetness == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sweetness),
+      coolness: coolness == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coolness),
+      richness: richness == null && nullToAbsent
+          ? const Value.absent()
+          : Value(richness),
+      canRebuy: Value(canRebuy),
+      flavorFades: Value(flavorFades),
+    );
+  }
+
+  factory VapeItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VapeItem(
+      itemId: serializer.fromJson<String>(json['itemId']),
+      brand: serializer.fromJson<String>(json['brand']),
+      nicotineType: serializer.fromJson<NicotineType>(json['nicotineType']),
+      nicotineStrength: serializer.fromJson<String>(json['nicotineStrength']),
+      flavorCategory: serializer.fromJson<FlavorCategory?>(
+        json['flavorCategory'],
+      ),
+      flavorDescription: serializer.fromJson<String?>(
+        json['flavorDescription'],
+      ),
+      sweetness: serializer.fromJson<int?>(json['sweetness']),
+      coolness: serializer.fromJson<int?>(json['coolness']),
+      richness: serializer.fromJson<int?>(json['richness']),
+      canRebuy: serializer.fromJson<bool>(json['canRebuy']),
+      flavorFades: serializer.fromJson<bool>(json['flavorFades']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'itemId': serializer.toJson<String>(itemId),
+      'brand': serializer.toJson<String>(brand),
+      'nicotineType': serializer.toJson<NicotineType>(nicotineType),
+      'nicotineStrength': serializer.toJson<String>(nicotineStrength),
+      'flavorCategory': serializer.toJson<FlavorCategory?>(flavorCategory),
+      'flavorDescription': serializer.toJson<String?>(flavorDescription),
+      'sweetness': serializer.toJson<int?>(sweetness),
+      'coolness': serializer.toJson<int?>(coolness),
+      'richness': serializer.toJson<int?>(richness),
+      'canRebuy': serializer.toJson<bool>(canRebuy),
+      'flavorFades': serializer.toJson<bool>(flavorFades),
+    };
+  }
+
+  VapeItem copyWith({
+    String? itemId,
+    String? brand,
+    NicotineType? nicotineType,
+    String? nicotineStrength,
+    Value<FlavorCategory?> flavorCategory = const Value.absent(),
+    Value<String?> flavorDescription = const Value.absent(),
+    Value<int?> sweetness = const Value.absent(),
+    Value<int?> coolness = const Value.absent(),
+    Value<int?> richness = const Value.absent(),
+    bool? canRebuy,
+    bool? flavorFades,
+  }) => VapeItem(
+    itemId: itemId ?? this.itemId,
+    brand: brand ?? this.brand,
+    nicotineType: nicotineType ?? this.nicotineType,
+    nicotineStrength: nicotineStrength ?? this.nicotineStrength,
+    flavorCategory: flavorCategory.present
+        ? flavorCategory.value
+        : this.flavorCategory,
+    flavorDescription: flavorDescription.present
+        ? flavorDescription.value
+        : this.flavorDescription,
+    sweetness: sweetness.present ? sweetness.value : this.sweetness,
+    coolness: coolness.present ? coolness.value : this.coolness,
+    richness: richness.present ? richness.value : this.richness,
+    canRebuy: canRebuy ?? this.canRebuy,
+    flavorFades: flavorFades ?? this.flavorFades,
+  );
+  VapeItem copyWithCompanion(VapeItemsCompanion data) {
+    return VapeItem(
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      brand: data.brand.present ? data.brand.value : this.brand,
+      nicotineType: data.nicotineType.present
+          ? data.nicotineType.value
+          : this.nicotineType,
+      nicotineStrength: data.nicotineStrength.present
+          ? data.nicotineStrength.value
+          : this.nicotineStrength,
+      flavorCategory: data.flavorCategory.present
+          ? data.flavorCategory.value
+          : this.flavorCategory,
+      flavorDescription: data.flavorDescription.present
+          ? data.flavorDescription.value
+          : this.flavorDescription,
+      sweetness: data.sweetness.present ? data.sweetness.value : this.sweetness,
+      coolness: data.coolness.present ? data.coolness.value : this.coolness,
+      richness: data.richness.present ? data.richness.value : this.richness,
+      canRebuy: data.canRebuy.present ? data.canRebuy.value : this.canRebuy,
+      flavorFades: data.flavorFades.present
+          ? data.flavorFades.value
+          : this.flavorFades,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VapeItem(')
+          ..write('itemId: $itemId, ')
+          ..write('brand: $brand, ')
+          ..write('nicotineType: $nicotineType, ')
+          ..write('nicotineStrength: $nicotineStrength, ')
+          ..write('flavorCategory: $flavorCategory, ')
+          ..write('flavorDescription: $flavorDescription, ')
+          ..write('sweetness: $sweetness, ')
+          ..write('coolness: $coolness, ')
+          ..write('richness: $richness, ')
+          ..write('canRebuy: $canRebuy, ')
+          ..write('flavorFades: $flavorFades')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    itemId,
+    brand,
+    nicotineType,
+    nicotineStrength,
+    flavorCategory,
+    flavorDescription,
+    sweetness,
+    coolness,
+    richness,
+    canRebuy,
+    flavorFades,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VapeItem &&
+          other.itemId == this.itemId &&
+          other.brand == this.brand &&
+          other.nicotineType == this.nicotineType &&
+          other.nicotineStrength == this.nicotineStrength &&
+          other.flavorCategory == this.flavorCategory &&
+          other.flavorDescription == this.flavorDescription &&
+          other.sweetness == this.sweetness &&
+          other.coolness == this.coolness &&
+          other.richness == this.richness &&
+          other.canRebuy == this.canRebuy &&
+          other.flavorFades == this.flavorFades);
+}
+
+class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
+  final Value<String> itemId;
+  final Value<String> brand;
+  final Value<NicotineType> nicotineType;
+  final Value<String> nicotineStrength;
+  final Value<FlavorCategory?> flavorCategory;
+  final Value<String?> flavorDescription;
+  final Value<int?> sweetness;
+  final Value<int?> coolness;
+  final Value<int?> richness;
+  final Value<bool> canRebuy;
+  final Value<bool> flavorFades;
+  final Value<int> rowid;
+  const VapeItemsCompanion({
+    this.itemId = const Value.absent(),
+    this.brand = const Value.absent(),
+    this.nicotineType = const Value.absent(),
+    this.nicotineStrength = const Value.absent(),
+    this.flavorCategory = const Value.absent(),
+    this.flavorDescription = const Value.absent(),
+    this.sweetness = const Value.absent(),
+    this.coolness = const Value.absent(),
+    this.richness = const Value.absent(),
+    this.canRebuy = const Value.absent(),
+    this.flavorFades = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VapeItemsCompanion.insert({
+    required String itemId,
+    required String brand,
+    required NicotineType nicotineType,
+    required String nicotineStrength,
+    this.flavorCategory = const Value.absent(),
+    this.flavorDescription = const Value.absent(),
+    this.sweetness = const Value.absent(),
+    this.coolness = const Value.absent(),
+    this.richness = const Value.absent(),
+    this.canRebuy = const Value.absent(),
+    this.flavorFades = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : itemId = Value(itemId),
+       brand = Value(brand),
+       nicotineType = Value(nicotineType),
+       nicotineStrength = Value(nicotineStrength);
+  static Insertable<VapeItem> custom({
+    Expression<String>? itemId,
+    Expression<String>? brand,
+    Expression<String>? nicotineType,
+    Expression<String>? nicotineStrength,
+    Expression<String>? flavorCategory,
+    Expression<String>? flavorDescription,
+    Expression<int>? sweetness,
+    Expression<int>? coolness,
+    Expression<int>? richness,
+    Expression<bool>? canRebuy,
+    Expression<bool>? flavorFades,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (itemId != null) 'item_id': itemId,
+      if (brand != null) 'brand': brand,
+      if (nicotineType != null) 'nicotine_type': nicotineType,
+      if (nicotineStrength != null) 'nicotine_strength': nicotineStrength,
+      if (flavorCategory != null) 'flavor_category': flavorCategory,
+      if (flavorDescription != null) 'flavor_description': flavorDescription,
+      if (sweetness != null) 'sweetness': sweetness,
+      if (coolness != null) 'coolness': coolness,
+      if (richness != null) 'richness': richness,
+      if (canRebuy != null) 'can_rebuy': canRebuy,
+      if (flavorFades != null) 'flavor_fades': flavorFades,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VapeItemsCompanion copyWith({
+    Value<String>? itemId,
+    Value<String>? brand,
+    Value<NicotineType>? nicotineType,
+    Value<String>? nicotineStrength,
+    Value<FlavorCategory?>? flavorCategory,
+    Value<String?>? flavorDescription,
+    Value<int?>? sweetness,
+    Value<int?>? coolness,
+    Value<int?>? richness,
+    Value<bool>? canRebuy,
+    Value<bool>? flavorFades,
+    Value<int>? rowid,
+  }) {
+    return VapeItemsCompanion(
+      itemId: itemId ?? this.itemId,
+      brand: brand ?? this.brand,
+      nicotineType: nicotineType ?? this.nicotineType,
+      nicotineStrength: nicotineStrength ?? this.nicotineStrength,
+      flavorCategory: flavorCategory ?? this.flavorCategory,
+      flavorDescription: flavorDescription ?? this.flavorDescription,
+      sweetness: sweetness ?? this.sweetness,
+      coolness: coolness ?? this.coolness,
+      richness: richness ?? this.richness,
+      canRebuy: canRebuy ?? this.canRebuy,
+      flavorFades: flavorFades ?? this.flavorFades,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (itemId.present) {
+      map['item_id'] = Variable<String>(itemId.value);
+    }
+    if (brand.present) {
+      map['brand'] = Variable<String>(brand.value);
+    }
+    if (nicotineType.present) {
+      map['nicotine_type'] = Variable<String>(
+        $VapeItemsTable.$converternicotineType.toSql(nicotineType.value),
+      );
+    }
+    if (nicotineStrength.present) {
+      map['nicotine_strength'] = Variable<String>(nicotineStrength.value);
+    }
+    if (flavorCategory.present) {
+      map['flavor_category'] = Variable<String>(
+        $VapeItemsTable.$converterflavorCategoryn.toSql(flavorCategory.value),
+      );
+    }
+    if (flavorDescription.present) {
+      map['flavor_description'] = Variable<String>(flavorDescription.value);
+    }
+    if (sweetness.present) {
+      map['sweetness'] = Variable<int>(sweetness.value);
+    }
+    if (coolness.present) {
+      map['coolness'] = Variable<int>(coolness.value);
+    }
+    if (richness.present) {
+      map['richness'] = Variable<int>(richness.value);
+    }
+    if (canRebuy.present) {
+      map['can_rebuy'] = Variable<bool>(canRebuy.value);
+    }
+    if (flavorFades.present) {
+      map['flavor_fades'] = Variable<bool>(flavorFades.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VapeItemsCompanion(')
+          ..write('itemId: $itemId, ')
+          ..write('brand: $brand, ')
+          ..write('nicotineType: $nicotineType, ')
+          ..write('nicotineStrength: $nicotineStrength, ')
+          ..write('flavorCategory: $flavorCategory, ')
+          ..write('flavorDescription: $flavorDescription, ')
+          ..write('sweetness: $sweetness, ')
+          ..write('coolness: $coolness, ')
+          ..write('richness: $richness, ')
+          ..write('canRebuy: $canRebuy, ')
+          ..write('flavorFades: $flavorFades, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ImagesTable extends Images with TableInfo<$ImagesTable, ImageRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -2631,6 +3343,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CatalogItemsTable catalogItems = $CatalogItemsTable(this);
   late final $MediaItemsTable mediaItems = $MediaItemsTable(this);
+  late final $VapeItemsTable vapeItems = $VapeItemsTable(this);
   late final $ImagesTable images = $ImagesTable(this);
   late final $TagsTable tags = $TagsTable(this);
   late final $ItemTagsTable itemTags = $ItemTagsTable(this);
@@ -2641,6 +3354,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     catalogItems,
     mediaItems,
+    vapeItems,
     images,
     tags,
     itemTags,
@@ -2653,6 +3367,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('media_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'catalog_items',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('vape_items', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -2740,6 +3461,24 @@ final class $$CatalogItemsTableReferences
     ).filter((f) => f.itemId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_mediaItemsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$VapeItemsTable, List<VapeItem>>
+  _vapeItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.vapeItems,
+    aliasName: 'catalog_items__id__vape_items__item_id',
+  );
+
+  $$VapeItemsTableProcessedTableManager get vapeItemsRefs {
+    final manager = $$VapeItemsTableTableManager(
+      $_db,
+      $_db.vapeItems,
+    ).filter((f) => f.itemId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_vapeItemsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2911,6 +3650,31 @@ class $$CatalogItemsTableFilterComposer
           }) => $$MediaItemsTableFilterComposer(
             $db: $db,
             $table: $db.mediaItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> vapeItemsRefs(
+    Expression<bool> Function($$VapeItemsTableFilterComposer f) f,
+  ) {
+    final $$VapeItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.vapeItems,
+      getReferencedColumn: (t) => t.itemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$VapeItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.vapeItems,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3181,6 +3945,31 @@ class $$CatalogItemsTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> vapeItemsRefs<T extends Object>(
+    Expression<T> Function($$VapeItemsTableAnnotationComposer a) f,
+  ) {
+    final $$VapeItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.vapeItems,
+      getReferencedColumn: (t) => t.itemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$VapeItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.vapeItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> imagesRefs<T extends Object>(
     Expression<T> Function($$ImagesTableAnnotationComposer a) f,
   ) {
@@ -3247,6 +4036,7 @@ class $$CatalogItemsTableTableManager
           CatalogItem,
           PrefetchHooks Function({
             bool mediaItemsRefs,
+            bool vapeItemsRefs,
             bool imagesRefs,
             bool itemTagsRefs,
           })
@@ -3359,6 +4149,7 @@ class $$CatalogItemsTableTableManager
           prefetchHooksCallback:
               ({
                 mediaItemsRefs = false,
+                vapeItemsRefs = false,
                 imagesRefs = false,
                 itemTagsRefs = false,
               }) {
@@ -3366,6 +4157,7 @@ class $$CatalogItemsTableTableManager
                   db: db,
                   explicitlyWatchedTables: [
                     if (mediaItemsRefs) db.mediaItems,
+                    if (vapeItemsRefs) db.vapeItems,
                     if (imagesRefs) db.images,
                     if (itemTagsRefs) db.itemTags,
                   ],
@@ -3387,6 +4179,27 @@ class $$CatalogItemsTableTableManager
                                 table,
                                 p0,
                               ).mediaItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.itemId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (vapeItemsRefs)
+                        await $_getPrefetchedData<
+                          CatalogItem,
+                          $CatalogItemsTable,
+                          VapeItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CatalogItemsTableReferences
+                              ._vapeItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CatalogItemsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).vapeItemsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.itemId == item.id,
@@ -3457,6 +4270,7 @@ typedef $$CatalogItemsTableProcessedTableManager =
       CatalogItem,
       PrefetchHooks Function({
         bool mediaItemsRefs,
+        bool vapeItemsRefs,
         bool imagesRefs,
         bool itemTagsRefs,
       })
@@ -3883,6 +4697,451 @@ typedef $$MediaItemsTableProcessedTableManager =
       $$MediaItemsTableUpdateCompanionBuilder,
       (MediaItem, $$MediaItemsTableReferences),
       MediaItem,
+      PrefetchHooks Function({bool itemId})
+    >;
+typedef $$VapeItemsTableCreateCompanionBuilder =
+    VapeItemsCompanion Function({
+      required String itemId,
+      required String brand,
+      required NicotineType nicotineType,
+      required String nicotineStrength,
+      Value<FlavorCategory?> flavorCategory,
+      Value<String?> flavorDescription,
+      Value<int?> sweetness,
+      Value<int?> coolness,
+      Value<int?> richness,
+      Value<bool> canRebuy,
+      Value<bool> flavorFades,
+      Value<int> rowid,
+    });
+typedef $$VapeItemsTableUpdateCompanionBuilder =
+    VapeItemsCompanion Function({
+      Value<String> itemId,
+      Value<String> brand,
+      Value<NicotineType> nicotineType,
+      Value<String> nicotineStrength,
+      Value<FlavorCategory?> flavorCategory,
+      Value<String?> flavorDescription,
+      Value<int?> sweetness,
+      Value<int?> coolness,
+      Value<int?> richness,
+      Value<bool> canRebuy,
+      Value<bool> flavorFades,
+      Value<int> rowid,
+    });
+
+final class $$VapeItemsTableReferences
+    extends BaseReferences<_$AppDatabase, $VapeItemsTable, VapeItem> {
+  $$VapeItemsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $CatalogItemsTable _itemIdTable(_$AppDatabase db) =>
+      db.catalogItems.createAlias('vape_items__item_id__catalog_items__id');
+
+  $$CatalogItemsTableProcessedTableManager get itemId {
+    final $_column = $_itemColumn<String>('item_id')!;
+
+    final manager = $$CatalogItemsTableTableManager(
+      $_db,
+      $_db.catalogItems,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_itemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$VapeItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $VapeItemsTable> {
+  $$VapeItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get brand => $composableBuilder(
+    column: $table.brand,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<NicotineType, NicotineType, String>
+  get nicotineType => $composableBuilder(
+    column: $table.nicotineType,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get nicotineStrength => $composableBuilder(
+    column: $table.nicotineStrength,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<FlavorCategory?, FlavorCategory, String>
+  get flavorCategory => $composableBuilder(
+    column: $table.flavorCategory,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get flavorDescription => $composableBuilder(
+    column: $table.flavorDescription,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sweetness => $composableBuilder(
+    column: $table.sweetness,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get coolness => $composableBuilder(
+    column: $table.coolness,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get richness => $composableBuilder(
+    column: $table.richness,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get canRebuy => $composableBuilder(
+    column: $table.canRebuy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get flavorFades => $composableBuilder(
+    column: $table.flavorFades,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CatalogItemsTableFilterComposer get itemId {
+    final $$CatalogItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.catalogItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CatalogItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.catalogItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VapeItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $VapeItemsTable> {
+  $$VapeItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get brand => $composableBuilder(
+    column: $table.brand,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nicotineType => $composableBuilder(
+    column: $table.nicotineType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nicotineStrength => $composableBuilder(
+    column: $table.nicotineStrength,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get flavorCategory => $composableBuilder(
+    column: $table.flavorCategory,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get flavorDescription => $composableBuilder(
+    column: $table.flavorDescription,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sweetness => $composableBuilder(
+    column: $table.sweetness,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get coolness => $composableBuilder(
+    column: $table.coolness,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get richness => $composableBuilder(
+    column: $table.richness,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get canRebuy => $composableBuilder(
+    column: $table.canRebuy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get flavorFades => $composableBuilder(
+    column: $table.flavorFades,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CatalogItemsTableOrderingComposer get itemId {
+    final $$CatalogItemsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.catalogItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CatalogItemsTableOrderingComposer(
+            $db: $db,
+            $table: $db.catalogItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VapeItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VapeItemsTable> {
+  $$VapeItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get brand =>
+      $composableBuilder(column: $table.brand, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<NicotineType, String> get nicotineType =>
+      $composableBuilder(
+        column: $table.nicotineType,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get nicotineStrength => $composableBuilder(
+    column: $table.nicotineStrength,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<FlavorCategory?, String>
+  get flavorCategory => $composableBuilder(
+    column: $table.flavorCategory,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get flavorDescription => $composableBuilder(
+    column: $table.flavorDescription,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sweetness =>
+      $composableBuilder(column: $table.sweetness, builder: (column) => column);
+
+  GeneratedColumn<int> get coolness =>
+      $composableBuilder(column: $table.coolness, builder: (column) => column);
+
+  GeneratedColumn<int> get richness =>
+      $composableBuilder(column: $table.richness, builder: (column) => column);
+
+  GeneratedColumn<bool> get canRebuy =>
+      $composableBuilder(column: $table.canRebuy, builder: (column) => column);
+
+  GeneratedColumn<bool> get flavorFades => $composableBuilder(
+    column: $table.flavorFades,
+    builder: (column) => column,
+  );
+
+  $$CatalogItemsTableAnnotationComposer get itemId {
+    final $$CatalogItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.catalogItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CatalogItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.catalogItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VapeItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VapeItemsTable,
+          VapeItem,
+          $$VapeItemsTableFilterComposer,
+          $$VapeItemsTableOrderingComposer,
+          $$VapeItemsTableAnnotationComposer,
+          $$VapeItemsTableCreateCompanionBuilder,
+          $$VapeItemsTableUpdateCompanionBuilder,
+          (VapeItem, $$VapeItemsTableReferences),
+          VapeItem,
+          PrefetchHooks Function({bool itemId})
+        > {
+  $$VapeItemsTableTableManager(_$AppDatabase db, $VapeItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VapeItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VapeItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VapeItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> itemId = const Value.absent(),
+                Value<String> brand = const Value.absent(),
+                Value<NicotineType> nicotineType = const Value.absent(),
+                Value<String> nicotineStrength = const Value.absent(),
+                Value<FlavorCategory?> flavorCategory = const Value.absent(),
+                Value<String?> flavorDescription = const Value.absent(),
+                Value<int?> sweetness = const Value.absent(),
+                Value<int?> coolness = const Value.absent(),
+                Value<int?> richness = const Value.absent(),
+                Value<bool> canRebuy = const Value.absent(),
+                Value<bool> flavorFades = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VapeItemsCompanion(
+                itemId: itemId,
+                brand: brand,
+                nicotineType: nicotineType,
+                nicotineStrength: nicotineStrength,
+                flavorCategory: flavorCategory,
+                flavorDescription: flavorDescription,
+                sweetness: sweetness,
+                coolness: coolness,
+                richness: richness,
+                canRebuy: canRebuy,
+                flavorFades: flavorFades,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String itemId,
+                required String brand,
+                required NicotineType nicotineType,
+                required String nicotineStrength,
+                Value<FlavorCategory?> flavorCategory = const Value.absent(),
+                Value<String?> flavorDescription = const Value.absent(),
+                Value<int?> sweetness = const Value.absent(),
+                Value<int?> coolness = const Value.absent(),
+                Value<int?> richness = const Value.absent(),
+                Value<bool> canRebuy = const Value.absent(),
+                Value<bool> flavorFades = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VapeItemsCompanion.insert(
+                itemId: itemId,
+                brand: brand,
+                nicotineType: nicotineType,
+                nicotineStrength: nicotineStrength,
+                flavorCategory: flavorCategory,
+                flavorDescription: flavorDescription,
+                sweetness: sweetness,
+                coolness: coolness,
+                richness: richness,
+                canRebuy: canRebuy,
+                flavorFades: flavorFades,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$VapeItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({itemId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (itemId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.itemId,
+                                referencedTable: $$VapeItemsTableReferences
+                                    ._itemIdTable(db),
+                                referencedColumn: $$VapeItemsTableReferences
+                                    ._itemIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$VapeItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VapeItemsTable,
+      VapeItem,
+      $$VapeItemsTableFilterComposer,
+      $$VapeItemsTableOrderingComposer,
+      $$VapeItemsTableAnnotationComposer,
+      $$VapeItemsTableCreateCompanionBuilder,
+      $$VapeItemsTableUpdateCompanionBuilder,
+      (VapeItem, $$VapeItemsTableReferences),
+      VapeItem,
       PrefetchHooks Function({bool itemId})
     >;
 typedef $$ImagesTableCreateCompanionBuilder =
@@ -4827,6 +6086,8 @@ class $AppDatabaseManager {
       $$CatalogItemsTableTableManager(_db, _db.catalogItems);
   $$MediaItemsTableTableManager get mediaItems =>
       $$MediaItemsTableTableManager(_db, _db.mediaItems);
+  $$VapeItemsTableTableManager get vapeItems =>
+      $$VapeItemsTableTableManager(_db, _db.vapeItems);
   $$ImagesTableTableManager get images =>
       $$ImagesTableTableManager(_db, _db.images);
   $$TagsTableTableManager get tags => $$TagsTableTableManager(_db, _db.tags);

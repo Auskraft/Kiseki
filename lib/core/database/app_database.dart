@@ -4,10 +4,14 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart' show SqliteException;
 
 import '../../features/media/data/media_converters.dart';
+import '../../features/vape/data/vape_converters.dart';
 import '../error/failures.dart';
 import '../../features/media/data/tables/media_items.dart';
+import '../../features/vape/data/tables/vape_items.dart';
 import '../../features/media/domain/media_format.dart';
 import '../../features/media/domain/media_type.dart';
+import '../../features/vape/domain/flavor_category.dart';
+import '../../features/vape/domain/nicotine_type.dart';
 import '../catalog/catalog_domain.dart';
 import '../catalog/date_precision.dart';
 import '../catalog/unfinished_reason.dart';
@@ -33,12 +37,12 @@ const int _sqliteFull = 13;
 /// Список таблиц в `@DriftDatabase` — единственная вынужденная точка касания
 /// ядра при добавлении домена (Drift статичен). FTS5 и триггеры создаются
 /// сырым SQL в `onCreate` (см. [fts.dart]).
-@DriftDatabase(tables: [CatalogItems, MediaItems, Images, Tags, ItemTags])
+@DriftDatabase(tables: [CatalogItems, MediaItems, VapeItems, Images, Tags, ItemTags])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -61,6 +65,11 @@ class AppDatabase extends _$AppDatabase {
               "UPDATE media_items SET media_type = 'movie' "
               "WHERE media_type = 'series'",
             );
+          }
+          // v2→v3: новый домен «жидкость для вейпа» — аддитивно создаём
+          // доменную таблицу 1:1 к ядру (ADR-02). Ядро/медиа не трогаются.
+          if (from < 3) {
+            await m.createTable(vapeItems);
           }
         },
         beforeOpen: (details) async {
