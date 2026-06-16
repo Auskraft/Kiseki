@@ -126,6 +126,9 @@ class _Body extends StatelessWidget {
         const SizedBox(height: 8),
         _ToggleInfo(label: 'Можно покупать снова', value: entry.canRebuy),
         _ToggleInfo(label: 'Мылится вкус', value: entry.flavorFades),
+        _ToggleInfo(
+            label: 'Портит вату/картридж/испаритель',
+            value: entry.damagesHardware),
         const SizedBox(height: 18),
         _RatingsCard(entry: entry),
         if ((entry.flavorDescription ?? '').trim().isNotEmpty) ...[

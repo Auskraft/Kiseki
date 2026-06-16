@@ -33,9 +33,12 @@ class VapeItems extends Table {
   IntColumn get coolness => integer().nullable()();
   IntColumn get richness => integer().nullable()();
 
-  /// Можно покупать снова / мылится ли вкус.
+  /// Можно покупать снова / мылится ли вкус / портит железо (вата/картридж/
+  /// испаритель).
   BoolColumn get canRebuy => boolean().withDefault(const Constant(false))();
   BoolColumn get flavorFades => boolean().withDefault(const Constant(false))();
+  BoolColumn get damagesHardware =>
+      boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {itemId};

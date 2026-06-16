@@ -42,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -70,6 +70,12 @@ class AppDatabase extends _$AppDatabase {
           // доменную таблицу 1:1 к ядру (ADR-02). Ядро/медиа не трогаются.
           if (from < 3) {
             await m.createTable(vapeItems);
+          }
+          // v3→v4: тугл «портит вату/картридж/испаритель» — аддитивная колонка.
+          // Только при from>=3: при from<3 createTable выше уже создаёт таблицу
+          // в текущей схеме (с этой колонкой) → повторный addColumn упал бы.
+          if (from >= 3 && from < 4) {
+            await m.addColumn(vapeItems, vapeItems.damagesHardware);
           }
         },
         beforeOpen: (details) async {

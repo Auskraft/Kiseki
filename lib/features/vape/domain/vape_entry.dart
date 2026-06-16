@@ -27,6 +27,7 @@ class VapeEntry extends Equatable {
     this.richness,
     this.canRebuy = false,
     this.flavorFades = false,
+    this.damagesHardware = false,
     this.images = const [],
     this.deletedAt,
   });
@@ -61,6 +62,9 @@ class VapeEntry extends Equatable {
   final bool canRebuy;
   final bool flavorFades;
 
+  /// Портит «железо» (вату/картридж/испаритель).
+  final bool damagesHardware;
+
   final List<CatalogImage> images;
   final DateTime? deletedAt;
 
@@ -90,6 +94,7 @@ class VapeEntry extends Equatable {
         richness,
         canRebuy,
         flavorFades,
+        damagesHardware,
         images,
         deletedAt,
       ];

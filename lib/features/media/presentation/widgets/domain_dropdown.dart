@@ -50,11 +50,6 @@ class DomainDropdown extends StatelessWidget {
                   style: TextStyle(
                       color: enabled.contains(d) ? null : tk.onFaint),
                 ),
-                if (!enabled.contains(d)) ...[
-                  const SizedBox(width: 8),
-                  Text('скоро',
-                      style: TextStyle(fontSize: 11 * uiScale, color: tk.onFaint)),
-                ],
               ],
             ),
           ),

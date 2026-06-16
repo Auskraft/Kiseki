@@ -34,6 +34,7 @@ void main() {
       coolness: 90,
       richness: 60,
       canRebuy: true,
+      damagesHardware: true,
     ));
     expect(id, isNotEmpty);
 
@@ -53,6 +54,7 @@ void main() {
     expect(e.richness, 60);
     expect(e.canRebuy, isTrue);
     expect(e.flavorFades, isFalse);
+    expect(e.damagesHardware, isTrue);
     expect(e.addedAt?.value.year, 2026);
     expect(e.addedAt?.value.month, 6);
   });

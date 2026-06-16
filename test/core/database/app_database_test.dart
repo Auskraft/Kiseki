@@ -109,7 +109,7 @@ void main() {
     );
   });
 
-  test('миграция v1→v3: series→movie + создаётся vape_items', () async {
+  test('миграция v1→v4: series→movie + vape_items + damages_hardware', () async {
     final dir = Directory.systemTemp.createTempSync('kiseki_migrate_');
     addTearDown(() {
       if (dir.existsSync()) dir.deleteSync(recursive: true);
@@ -139,11 +139,59 @@ void main() {
         .customSelect("SELECT media_type FROM media_items WHERE item_id = 's1'")
         .getSingle();
     expect(row.read<String>('media_type'), 'movie');
-    expect(v2.schemaVersion, 3);
-    // v2→v3 создал доменную таблицу vape_items (пустую, читается без ошибки).
+    expect(v2.schemaVersion, 4);
+    // v2→v3 создал доменную таблицу vape_items (пустую, читается без ошибки);
+    // v3→v4 добавил колонку damages_hardware (createTable выше уже создал её в
+    // текущей схеме → addColumn для from<3 пропускается, конфликта нет).
     final vape = await v2
-        .customSelect('SELECT COUNT(*) AS n FROM vape_items')
+        .customSelect('SELECT COUNT(*) AS n, '
+            'COUNT(damages_hardware) AS dh FROM vape_items')
         .getSingle();
     expect(vape.read<int>('n'), 0);
+  });
+
+  test('миграция v3→v4: добавляется колонка damages_hardware (default 0)',
+      () async {
+    final dir = Directory.systemTemp.createTempSync('kiseki_migrate_v3_');
+    addTearDown(() {
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    });
+    final file = File(p.join(dir.path, 'v3.sqlite'));
+
+    // Поднимаем БД, пересоздаём vape_items в схеме v3 (БЕЗ damages_hardware) и
+    // кладём строку, затем откатываем user_version к 3 — имитируем v3-БД.
+    final v3 = AppDatabase(NativeDatabase(file));
+    await v3.customStatement('DROP TABLE vape_items');
+    await v3.customStatement(
+      'CREATE TABLE vape_items ('
+      'item_id TEXT NOT NULL PRIMARY KEY '
+      'REFERENCES catalog_items (id) ON DELETE CASCADE, '
+      'brand TEXT NOT NULL, nicotine_type TEXT NOT NULL, '
+      'nicotine_strength TEXT NOT NULL, flavor_category TEXT, '
+      'flavor_description TEXT, sweetness INTEGER, coolness INTEGER, '
+      'richness INTEGER, can_rebuy INTEGER NOT NULL DEFAULT 0, '
+      'flavor_fades INTEGER NOT NULL DEFAULT 0)',
+    );
+    await v3.customStatement(
+      "INSERT INTO catalog_items (id, domain, title, status, is_favorite, "
+      "event_count, created_at, updated_at) "
+      "VALUES ('v1', 'vape', 'Манго', 'plan', 0, 0, 0, 0)",
+    );
+    await v3.customStatement(
+      "INSERT INTO vape_items (item_id, brand, nicotine_type, "
+      "nicotine_strength) VALUES ('v1', 'BrandX', 'salt', '20')",
+    );
+    await v3.customStatement('PRAGMA user_version = 3');
+    await v3.close();
+
+    // Переоткрываем: user_version=3 < 4 → onUpgrade добавляет damages_hardware.
+    final v4 = AppDatabase(NativeDatabase(file));
+    addTearDown(v4.close);
+    final out = await v4
+        .customSelect(
+            "SELECT damages_hardware FROM vape_items WHERE item_id = 'v1'")
+        .getSingle();
+    expect(out.read<int>('damages_hardware'), 0);
+    expect(v4.schemaVersion, 4);
   });
 }

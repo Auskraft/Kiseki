@@ -26,7 +26,7 @@ class VapeRepositoryImpl implements VapeRepository {
   static const _select =
       'SELECT c.*, v.brand, v.nicotine_type, v.nicotine_strength, '
       'v.flavor_category, v.flavor_description, v.sweetness, v.coolness, '
-      'v.richness, v.can_rebuy, v.flavor_fades '
+      'v.richness, v.can_rebuy, v.flavor_fades, v.damages_hardware '
       'FROM catalog_items c JOIN vape_items v ON v.item_id = c.id';
 
   @override
@@ -140,6 +140,7 @@ class VapeRepositoryImpl implements VapeRepository {
       richness: Value(d.richness),
       canRebuy: Value(d.canRebuy),
       flavorFades: Value(d.flavorFades),
+      damagesHardware: Value(d.damagesHardware),
     );
   }
 
@@ -155,6 +156,7 @@ class VapeRepositoryImpl implements VapeRepository {
       richness: Value(d.richness),
       canRebuy: Value(d.canRebuy),
       flavorFades: Value(d.flavorFades),
+      damagesHardware: Value(d.damagesHardware),
     );
   }
 
@@ -230,6 +232,7 @@ class VapeRepositoryImpl implements VapeRepository {
       richness: r.readNullable<int>('richness'),
       canRebuy: r.read<int>('can_rebuy') == 1,
       flavorFades: r.read<int>('flavor_fades') == 1,
+      damagesHardware: r.read<int>('damages_hardware') == 1,
       images: images,
       deletedAt: ms('deleted_at'),
     );

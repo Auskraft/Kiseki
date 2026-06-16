@@ -20,6 +20,7 @@ class VapeDraft {
     this.richness,
     this.canRebuy = false,
     this.flavorFades = false,
+    this.damagesHardware = false,
     this.coverImageId,
   });
 
@@ -37,6 +38,7 @@ class VapeDraft {
   final int? richness;
   final bool canRebuy;
   final bool flavorFades;
+  final bool damagesHardware;
 
   /// UUID фото упаковки (файлы уже сохранены [ImageStorage]). `null` — без фото.
   final String? coverImageId;

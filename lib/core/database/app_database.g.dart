@@ -1866,6 +1866,21 @@ class $VapeItemsTable extends VapeItems
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _damagesHardwareMeta = const VerificationMeta(
+    'damagesHardware',
+  );
+  @override
+  late final GeneratedColumn<bool> damagesHardware = GeneratedColumn<bool>(
+    'damages_hardware',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("damages_hardware" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     itemId,
@@ -1879,6 +1894,7 @@ class $VapeItemsTable extends VapeItems
     richness,
     canRebuy,
     flavorFades,
+    damagesHardware,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1961,6 +1977,15 @@ class $VapeItemsTable extends VapeItems
         ),
       );
     }
+    if (data.containsKey('damages_hardware')) {
+      context.handle(
+        _damagesHardwareMeta,
+        damagesHardware.isAcceptableOrUnknown(
+          data['damages_hardware']!,
+          _damagesHardwareMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2018,6 +2043,10 @@ class $VapeItemsTable extends VapeItems
         DriftSqlType.bool,
         data['${effectivePrefix}flavor_fades'],
       )!,
+      damagesHardware: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}damages_hardware'],
+      )!,
     );
   }
 
@@ -2053,9 +2082,11 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
   final int? coolness;
   final int? richness;
 
-  /// Можно покупать снова / мылится ли вкус.
+  /// Можно покупать снова / мылится ли вкус / портит железо (вата/картридж/
+  /// испаритель).
   final bool canRebuy;
   final bool flavorFades;
+  final bool damagesHardware;
   const VapeItem({
     required this.itemId,
     required this.brand,
@@ -2068,6 +2099,7 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
     this.richness,
     required this.canRebuy,
     required this.flavorFades,
+    required this.damagesHardware,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2099,6 +2131,7 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
     }
     map['can_rebuy'] = Variable<bool>(canRebuy);
     map['flavor_fades'] = Variable<bool>(flavorFades);
+    map['damages_hardware'] = Variable<bool>(damagesHardware);
     return map;
   }
 
@@ -2125,6 +2158,7 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
           : Value(richness),
       canRebuy: Value(canRebuy),
       flavorFades: Value(flavorFades),
+      damagesHardware: Value(damagesHardware),
     );
   }
 
@@ -2149,6 +2183,7 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
       richness: serializer.fromJson<int?>(json['richness']),
       canRebuy: serializer.fromJson<bool>(json['canRebuy']),
       flavorFades: serializer.fromJson<bool>(json['flavorFades']),
+      damagesHardware: serializer.fromJson<bool>(json['damagesHardware']),
     );
   }
   @override
@@ -2166,6 +2201,7 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
       'richness': serializer.toJson<int?>(richness),
       'canRebuy': serializer.toJson<bool>(canRebuy),
       'flavorFades': serializer.toJson<bool>(flavorFades),
+      'damagesHardware': serializer.toJson<bool>(damagesHardware),
     };
   }
 
@@ -2181,6 +2217,7 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
     Value<int?> richness = const Value.absent(),
     bool? canRebuy,
     bool? flavorFades,
+    bool? damagesHardware,
   }) => VapeItem(
     itemId: itemId ?? this.itemId,
     brand: brand ?? this.brand,
@@ -2197,6 +2234,7 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
     richness: richness.present ? richness.value : this.richness,
     canRebuy: canRebuy ?? this.canRebuy,
     flavorFades: flavorFades ?? this.flavorFades,
+    damagesHardware: damagesHardware ?? this.damagesHardware,
   );
   VapeItem copyWithCompanion(VapeItemsCompanion data) {
     return VapeItem(
@@ -2221,6 +2259,9 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
       flavorFades: data.flavorFades.present
           ? data.flavorFades.value
           : this.flavorFades,
+      damagesHardware: data.damagesHardware.present
+          ? data.damagesHardware.value
+          : this.damagesHardware,
     );
   }
 
@@ -2237,7 +2278,8 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
           ..write('coolness: $coolness, ')
           ..write('richness: $richness, ')
           ..write('canRebuy: $canRebuy, ')
-          ..write('flavorFades: $flavorFades')
+          ..write('flavorFades: $flavorFades, ')
+          ..write('damagesHardware: $damagesHardware')
           ..write(')'))
         .toString();
   }
@@ -2255,6 +2297,7 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
     richness,
     canRebuy,
     flavorFades,
+    damagesHardware,
   );
   @override
   bool operator ==(Object other) =>
@@ -2270,7 +2313,8 @@ class VapeItem extends DataClass implements Insertable<VapeItem> {
           other.coolness == this.coolness &&
           other.richness == this.richness &&
           other.canRebuy == this.canRebuy &&
-          other.flavorFades == this.flavorFades);
+          other.flavorFades == this.flavorFades &&
+          other.damagesHardware == this.damagesHardware);
 }
 
 class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
@@ -2285,6 +2329,7 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
   final Value<int?> richness;
   final Value<bool> canRebuy;
   final Value<bool> flavorFades;
+  final Value<bool> damagesHardware;
   final Value<int> rowid;
   const VapeItemsCompanion({
     this.itemId = const Value.absent(),
@@ -2298,6 +2343,7 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
     this.richness = const Value.absent(),
     this.canRebuy = const Value.absent(),
     this.flavorFades = const Value.absent(),
+    this.damagesHardware = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   VapeItemsCompanion.insert({
@@ -2312,6 +2358,7 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
     this.richness = const Value.absent(),
     this.canRebuy = const Value.absent(),
     this.flavorFades = const Value.absent(),
+    this.damagesHardware = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : itemId = Value(itemId),
        brand = Value(brand),
@@ -2329,6 +2376,7 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
     Expression<int>? richness,
     Expression<bool>? canRebuy,
     Expression<bool>? flavorFades,
+    Expression<bool>? damagesHardware,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2343,6 +2391,7 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
       if (richness != null) 'richness': richness,
       if (canRebuy != null) 'can_rebuy': canRebuy,
       if (flavorFades != null) 'flavor_fades': flavorFades,
+      if (damagesHardware != null) 'damages_hardware': damagesHardware,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2359,6 +2408,7 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
     Value<int?>? richness,
     Value<bool>? canRebuy,
     Value<bool>? flavorFades,
+    Value<bool>? damagesHardware,
     Value<int>? rowid,
   }) {
     return VapeItemsCompanion(
@@ -2373,6 +2423,7 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
       richness: richness ?? this.richness,
       canRebuy: canRebuy ?? this.canRebuy,
       flavorFades: flavorFades ?? this.flavorFades,
+      damagesHardware: damagesHardware ?? this.damagesHardware,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2417,6 +2468,9 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
     if (flavorFades.present) {
       map['flavor_fades'] = Variable<bool>(flavorFades.value);
     }
+    if (damagesHardware.present) {
+      map['damages_hardware'] = Variable<bool>(damagesHardware.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2437,6 +2491,7 @@ class VapeItemsCompanion extends UpdateCompanion<VapeItem> {
           ..write('richness: $richness, ')
           ..write('canRebuy: $canRebuy, ')
           ..write('flavorFades: $flavorFades, ')
+          ..write('damagesHardware: $damagesHardware, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4712,6 +4767,7 @@ typedef $$VapeItemsTableCreateCompanionBuilder =
       Value<int?> richness,
       Value<bool> canRebuy,
       Value<bool> flavorFades,
+      Value<bool> damagesHardware,
       Value<int> rowid,
     });
 typedef $$VapeItemsTableUpdateCompanionBuilder =
@@ -4727,6 +4783,7 @@ typedef $$VapeItemsTableUpdateCompanionBuilder =
       Value<int?> richness,
       Value<bool> canRebuy,
       Value<bool> flavorFades,
+      Value<bool> damagesHardware,
       Value<int> rowid,
     });
 
@@ -4813,6 +4870,11 @@ class $$VapeItemsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get damagesHardware => $composableBuilder(
+    column: $table.damagesHardware,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$CatalogItemsTableFilterComposer get itemId {
     final $$CatalogItemsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -4896,6 +4958,11 @@ class $$VapeItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get damagesHardware => $composableBuilder(
+    column: $table.damagesHardware,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CatalogItemsTableOrderingComposer get itemId {
     final $$CatalogItemsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4971,6 +5038,11 @@ class $$VapeItemsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get damagesHardware => $composableBuilder(
+    column: $table.damagesHardware,
+    builder: (column) => column,
+  );
+
   $$CatalogItemsTableAnnotationComposer get itemId {
     final $$CatalogItemsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -5034,6 +5106,7 @@ class $$VapeItemsTableTableManager
                 Value<int?> richness = const Value.absent(),
                 Value<bool> canRebuy = const Value.absent(),
                 Value<bool> flavorFades = const Value.absent(),
+                Value<bool> damagesHardware = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VapeItemsCompanion(
                 itemId: itemId,
@@ -5047,6 +5120,7 @@ class $$VapeItemsTableTableManager
                 richness: richness,
                 canRebuy: canRebuy,
                 flavorFades: flavorFades,
+                damagesHardware: damagesHardware,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5062,6 +5136,7 @@ class $$VapeItemsTableTableManager
                 Value<int?> richness = const Value.absent(),
                 Value<bool> canRebuy = const Value.absent(),
                 Value<bool> flavorFades = const Value.absent(),
+                Value<bool> damagesHardware = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VapeItemsCompanion.insert(
                 itemId: itemId,
@@ -5075,6 +5150,7 @@ class $$VapeItemsTableTableManager
                 richness: richness,
                 canRebuy: canRebuy,
                 flavorFades: flavorFades,
+                damagesHardware: damagesHardware,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

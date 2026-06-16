@@ -34,6 +34,7 @@ class VapeEditorState extends Equatable {
     this.richness,
     this.canRebuy = false,
     this.flavorFades = false,
+    this.damagesHardware = false,
     this.coverImageId,
     this.processingImage = false,
     this.loading = false,
@@ -60,6 +61,7 @@ class VapeEditorState extends Equatable {
   final int? richness;
   final bool canRebuy;
   final bool flavorFades;
+  final bool damagesHardware;
 
   final String? coverImageId;
   final bool processingImage;
@@ -91,6 +93,7 @@ class VapeEditorState extends Equatable {
     ValueGetter<int?>? richness,
     bool? canRebuy,
     bool? flavorFades,
+    bool? damagesHardware,
     ValueGetter<String?>? coverImageId,
     bool? processingImage,
     bool? loading,
@@ -119,6 +122,7 @@ class VapeEditorState extends Equatable {
       richness: richness != null ? richness() : this.richness,
       canRebuy: canRebuy ?? this.canRebuy,
       flavorFades: flavorFades ?? this.flavorFades,
+      damagesHardware: damagesHardware ?? this.damagesHardware,
       coverImageId: coverImageId != null ? coverImageId() : this.coverImageId,
       processingImage: processingImage ?? this.processingImage,
       loading: loading ?? this.loading,
@@ -146,6 +150,7 @@ class VapeEditorState extends Equatable {
         richness,
         canRebuy,
         flavorFades,
+        damagesHardware,
         coverImageId,
         processingImage,
         loading,
@@ -205,6 +210,7 @@ class VapeEditorCubit extends Cubit<VapeEditorState> {
       richness: e.richness,
       canRebuy: e.canRebuy,
       flavorFades: e.flavorFades,
+      damagesHardware: e.damagesHardware,
       coverImageId: e.cover?.id,
       loading: false,
     ));
@@ -238,6 +244,8 @@ class VapeEditorCubit extends Cubit<VapeEditorState> {
   void setRichness(int? v) => emit(state.copyWith(richness: () => v));
   void setCanRebuy(bool v) => emit(state.copyWith(canRebuy: v));
   void setFlavorFades(bool v) => emit(state.copyWith(flavorFades: v));
+  void setDamagesHardware(bool v) =>
+      emit(state.copyWith(damagesHardware: v));
 
   Future<void> attachCover(String sourcePath) async {
     emit(state.copyWith(processingImage: true, errorMessage: () => null));
@@ -289,6 +297,7 @@ class VapeEditorCubit extends Cubit<VapeEditorState> {
         richness: state.richness,
         canRebuy: state.canRebuy,
         flavorFades: state.flavorFades,
+        damagesHardware: state.damagesHardware,
         coverImageId: state.coverImageId,
       );
       if (state.mode == EditorMode.edit && state.entryId != null) {

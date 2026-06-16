@@ -306,50 +306,83 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
     final tk = context.tokens;
     final strengths =
         s.nicotineType == null ? const <String>[] : nicotineStrengthsFor(s.nicotineType!);
+    TextStyle inputStyle() => TextStyle(
+        fontSize: 14.5 * uiScale, fontWeight: FontWeight.w600, color: tk.onBg);
     return [
-      const EditorLabel('Бренд', required: true),
-      TextField(
-        controller: _brand,
-        onChanged: cubit.setBrand,
-        onTapOutside: dismissKeyboardOnTapOutside,
-        maxLength: 30,
-        buildCounter: coloredCharCounter,
-        textCapitalization: TextCapitalization.sentences,
-        style: TextStyle(fontSize: 14.5 * uiScale, fontWeight: FontWeight.w600, color: tk.onBg),
-        decoration: editorFieldDecoration(context, hint: 'Производитель'),
-      ),
-      const SizedBox(height: 10),
-      const EditorLabel('Название вкуса', required: true),
-      TextField(
-        controller: _title,
-        onChanged: cubit.setTitle,
-        onTapOutside: dismissKeyboardOnTapOutside,
-        maxLength: 50,
-        buildCounter: coloredCharCounter,
-        textCapitalization: TextCapitalization.sentences,
-        style: TextStyle(fontSize: 14.5 * uiScale, fontWeight: FontWeight.w600, color: tk.onBg),
-        decoration: editorFieldDecoration(context, hint: 'Например, Манго-лёд'),
+      // Бренд + Название вкуса — одной строкой, два инпута.
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const EditorLabel('Бренд', required: true),
+                TextField(
+                  controller: _brand,
+                  onChanged: cubit.setBrand,
+                  onTapOutside: dismissKeyboardOnTapOutside,
+                  maxLength: 30,
+                  buildCounter: coloredCharCounter,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: inputStyle(),
+                  decoration:
+                      editorFieldDecoration(context, hint: 'Производитель'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const EditorLabel('Название вкуса', required: true),
+                TextField(
+                  controller: _title,
+                  onChanged: cubit.setTitle,
+                  onTapOutside: dismissKeyboardOnTapOutside,
+                  maxLength: 50,
+                  buildCounter: coloredCharCounter,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: inputStyle(),
+                  decoration: editorFieldDecoration(context, hint: 'Манго-лёд'),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       const SizedBox(height: 14),
-      const EditorLabel('Фото упаковки'),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: _CoverThumb(
-          coverImageId: s.coverImageId,
-          processing: s.processingImage,
-          onPick: () => _pickCover(context),
-          onRemove: cubit.removeCover,
-        ),
-      ),
-      const SizedBox(height: 14),
-      const EditorLabel('Тип никотина', required: true),
-      EditorSegments<NicotineType>(
-        value: s.nicotineType,
-        onChanged: cubit.setNicotineType,
-        options: const [
-          (NicotineType.salt, 'Солевой'),
-          (NicotineType.alkaline, 'Щелочной'),
-          (NicotineType.hybrid, 'Гибрид'),
+      // Фото упаковки + Тип никотина — одной строкой (компоновка как у обложки
+      // в «Добавить просмотр»): слева фото, справа тип.
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _CoverThumb(
+            coverImageId: s.coverImageId,
+            processing: s.processingImage,
+            onPick: () => _pickCover(context),
+            onRemove: cubit.removeCover,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const EditorLabel('Тип никотина', required: true),
+                EditorSegments<NicotineType>(
+                  value: s.nicotineType,
+                  onChanged: cubit.setNicotineType,
+                  options: const [
+                    (NicotineType.salt, 'Солевой'),
+                    (NicotineType.alkaline, 'Щелочной'),
+                    (NicotineType.hybrid, 'Гибрид'),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
       if (s.nicotineType != null) ...[
@@ -444,6 +477,10 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
             label: 'Мылится вкус',
             value: s.flavorFades,
             onChanged: cubit.setFlavorFades),
+        _ToggleRow(
+            label: 'Портит вату/картридж/испаритель',
+            value: s.damagesHardware,
+            onChanged: cubit.setDamagesHardware),
         const SizedBox(height: 12),
         const EditorLabel('Комментарий'),
         TextField(
