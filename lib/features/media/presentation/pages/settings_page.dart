@@ -43,9 +43,6 @@ class SettingsPage extends StatelessWidget {
                   _SectionTitle('Визуальный стиль'),
                   _VisualStyleCard(),
                   SizedBox(height: 20),
-                  _SectionTitle('Каталог'),
-                  _CatalogCard(),
-                  SizedBox(height: 20),
                   _SectionTitle('Прочее'),
                   _MiscCard(),
                   SizedBox(height: 20),
@@ -418,33 +415,6 @@ class _VisualStyleCard extends StatelessWidget {
             icon: Icons.add_circle_outline_rounded,
             title: 'Кнопка добавления',
             onTap: () => context.push(AppRoute.fabStyle),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────── каталог (теги/корзина) ──────────────────────
-
-class _CatalogCard extends StatelessWidget {
-  const _CatalogCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return _Card(
-      child: Column(
-        children: [
-          _Row(
-            icon: Icons.label_outline_rounded,
-            title: 'Теги',
-            onTap: () => context.push(AppRoute.tags),
-          ),
-          const _Divider(),
-          _Row(
-            icon: Icons.delete_outline_rounded,
-            title: 'Корзина',
-            onTap: () => context.push(AppRoute.trash),
           ),
         ],
       ),

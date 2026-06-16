@@ -167,15 +167,53 @@ class _Header extends StatelessWidget {
         ? '$count карточек · $waiting ждут серий'
         : '$count карточек';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Главная', style: text.displaySmall),
-          const SizedBox(height: 2),
-          Text(subtitle, style: text.bodySmall),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Главная', style: text.displaySmall),
+                const SizedBox(height: 2),
+                Text(subtitle, style: text.bodySmall),
+              ],
+            ),
+          ),
+          const _HomeMenu(),
         ],
       ),
+    );
+  }
+}
+
+/// Меню ⋮ в шапке Главной: вход в «Корзину» (вынесен из настроек —
+/// теги теперь редактируются в карточке, корзина живёт здесь).
+class _HomeMenu extends StatelessWidget {
+  const _HomeMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = context.tokens;
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert_rounded, color: tk.onMuted),
+      tooltip: 'Ещё',
+      onSelected: (value) {
+        if (value == 'trash') context.push(AppRoute.trash);
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'trash',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline_rounded, size: 20, color: tk.onMuted),
+              const SizedBox(width: 12),
+              const Text('Корзина'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
