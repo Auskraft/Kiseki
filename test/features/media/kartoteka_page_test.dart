@@ -13,6 +13,8 @@ import 'package:kiseki/features/media/domain/media_format.dart';
 import 'package:kiseki/features/media/domain/media_repository.dart';
 import 'package:kiseki/features/media/domain/media_type.dart';
 import 'package:kiseki/features/media/presentation/pages/kartoteka_page.dart';
+import 'package:kiseki/features/vape/data/vape_repository_impl.dart';
+import 'package:kiseki/features/vape/domain/vape_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -22,6 +24,7 @@ void main() {
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
     getIt.registerSingleton<MediaRepository>(MediaRepositoryImpl(db));
+    getIt.registerSingleton<VapeRepository>(VapeRepositoryImpl(db));
   });
   tearDown(() async {
     await getIt.reset();
@@ -71,16 +74,16 @@ void main() {
     expect(find.text('Фильм А'), findsOneWidget);
     expect(find.text('План Б'), findsNothing);
 
-    // Выпадашка домена → «Чтение» = заглушка.
+    // Выпадашка домена → «Жидкость»: список жидкостей (пока пусто).
     await tester.tap(find.text('Просмотр'));
     for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 80));
     }
-    await tester.tap(find.text('Чтение').last);
+    await tester.tap(find.text('Жидкость').last);
     for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 80));
     }
-    expect(find.text('Чтение — скоро'), findsOneWidget);
+    expect(find.text('Пока нет жидкостей'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(milliseconds: 100));

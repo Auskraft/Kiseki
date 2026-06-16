@@ -3,22 +3,29 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 
-/// Домен картотеки. «Чтение» — будущая фича (книги/манга), пока заглушка.
-enum MediaDomain { watch, reading }
+/// Домен картотеки для выпадашки: «Просмотр» (медиа) и «Жидкость» (вейп).
+enum MediaDomain { watch, vape }
 
 String mediaDomainLabel(MediaDomain d) =>
-    d == MediaDomain.watch ? 'Просмотр' : 'Чтение';
+    d == MediaDomain.watch ? 'Просмотр' : 'Жидкость';
 
 IconData mediaDomainIcon(MediaDomain d) =>
-    d == MediaDomain.watch ? Icons.smart_display_rounded : Icons.menu_book_rounded;
+    d == MediaDomain.watch ? Icons.smart_display_rounded : Icons.water_drop_rounded;
 
-/// Выпадашка выбора домена (Просмотр/Чтение) — общая для вкладок Календарь и
-/// Картотека. Пилюля с иконкой+подписью, меню по тапу.
+/// Выпадашка выбора домена — общая для вкладок Календарь и Картотека. Пилюля с
+/// иконкой+подписью, меню по тапу. [enabled] — какие домены выбираемы (в
+/// Календаре «Жидкость» показана, но неактивна).
 class DomainDropdown extends StatelessWidget {
-  const DomainDropdown({super.key, required this.domain, required this.onChanged});
+  const DomainDropdown({
+    super.key,
+    required this.domain,
+    required this.onChanged,
+    this.enabled = const {MediaDomain.watch, MediaDomain.vape},
+  });
 
   final MediaDomain domain;
   final ValueChanged<MediaDomain> onChanged;
+  final Set<MediaDomain> enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +38,23 @@ class DomainDropdown extends StatelessWidget {
         for (final d in MediaDomain.values)
           PopupMenuItem<MediaDomain>(
             value: d,
+            enabled: enabled.contains(d),
             child: Row(
               children: [
-                Icon(mediaDomainIcon(d), size: 19, color: tk.onMuted),
+                Icon(mediaDomainIcon(d),
+                    size: 19,
+                    color: enabled.contains(d) ? tk.onMuted : tk.onFaint),
                 const SizedBox(width: 10),
-                Text(mediaDomainLabel(d)),
+                Text(
+                  mediaDomainLabel(d),
+                  style: TextStyle(
+                      color: enabled.contains(d) ? null : tk.onFaint),
+                ),
+                if (!enabled.contains(d)) ...[
+                  const SizedBox(width: 8),
+                  Text('скоро',
+                      style: TextStyle(fontSize: 11 * uiScale, color: tk.onFaint)),
+                ],
               ],
             ),
           ),
@@ -61,42 +80,6 @@ class DomainDropdown extends StatelessWidget {
               ),
             ),
             Icon(Icons.arrow_drop_down_rounded, size: 20, color: tk.onMuted),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Заглушка раздела «Чтение» (книги/манга — будущий домен картотеки).
-class ReadingComingSoon extends StatelessWidget {
-  const ReadingComingSoon({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final tk = context.tokens;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.menu_book_rounded, size: 48, color: tk.onFaint),
-            const SizedBox(height: 14),
-            Text(
-              'Чтение — скоро',
-              style: TextStyle(
-                fontSize: 15 * uiScale,
-                fontWeight: FontWeight.w700,
-                color: tk.onBg,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Книги и манга появятся отдельным разделом картотеки.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13 * uiScale, color: tk.onMuted),
-            ),
           ],
         ),
       ),

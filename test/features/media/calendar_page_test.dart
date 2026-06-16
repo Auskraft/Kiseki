@@ -75,17 +75,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     expect(find.text('Сквозь снег'), findsOneWidget);
 
-    // Выпадашка домена → «Чтение» = заглушка. onSelected у PopupMenuButton
-    // срабатывает после анимации закрытия меню — прокачиваем кадры с запасом.
+    // Выпадашка домена: «Жидкость» в календаре показана, но неактивна.
     await tester.tap(find.text('Просмотр'));
     for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 80));
     }
-    await tester.tap(find.text('Чтение').last);
-    for (var i = 0; i < 8; i++) {
-      await tester.pump(const Duration(milliseconds: 80));
-    }
-    expect(find.text('Чтение — скоро'), findsOneWidget);
+    expect(find.text('Жидкость'), findsWidgets);
 
     // Размонтируем — снять подписку кубита до закрытия БД.
     await tester.pumpWidget(const SizedBox());

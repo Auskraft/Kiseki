@@ -109,7 +109,7 @@ void main() {
     );
   });
 
-  test('миграция v1→v2: media_type "series" сворачивается в "movie"', () async {
+  test('миграция v1→v3: series→movie + создаётся vape_items', () async {
     final dir = Directory.systemTemp.createTempSync('kiseki_migrate_');
     addTearDown(() {
       if (dir.existsSync()) dir.deleteSync(recursive: true);
@@ -139,6 +139,11 @@ void main() {
         .customSelect("SELECT media_type FROM media_items WHERE item_id = 's1'")
         .getSingle();
     expect(row.read<String>('media_type'), 'movie');
-    expect(v2.schemaVersion, 2);
+    expect(v2.schemaVersion, 3);
+    // v2→v3 создал доменную таблицу vape_items (пустую, читается без ошибки).
+    final vape = await v2
+        .customSelect('SELECT COUNT(*) AS n FROM vape_items')
+        .getSingle();
+    expect(vape.read<int>('n'), 0);
   });
 }

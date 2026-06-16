@@ -10,11 +10,19 @@ import 'editor_primitives.dart';
 /// спектр red→green (10 градаций) с тактильным откликом и плавной сменой цвета.
 /// `null` = «не оценено» («—»); первое касание ставит значение, «×» — сбрасывает.
 class RatingInput extends StatefulWidget {
-  const RatingInput({super.key, required this.value, required this.onChanged});
+  const RatingInput({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.label = 'Оценка',
+  });
 
   /// 0–100 или `null` («без оценки»).
   final int? value;
   final ValueChanged<int?> onChanged;
+
+  /// Подпись слева (по умолчанию «Оценка»; для вейпа — «Сладость» и т.п.).
+  final String label;
 
   @override
   State<RatingInput> createState() => _RatingInputState();
@@ -52,7 +60,7 @@ class _RatingInputState extends State<RatingInput> {
           Row(
             children: [
               Text(
-                'Оценка',
+                widget.label,
                 style: TextStyle(
                   fontSize: 12.5 * uiScale,
                   fontWeight: FontWeight.w600,

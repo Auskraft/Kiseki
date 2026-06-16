@@ -84,10 +84,7 @@ class _CalendarViewState extends State<_CalendarView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _Header(domain: _domain, onDomain: (d) => setState(() => _domain = d)),
-            if (_domain == MediaDomain.reading)
-              const Expanded(child: ReadingComingSoon())
-            else
-              Expanded(child: _watchBody(context)),
+            Expanded(child: _watchBody(context)),
           ],
         ),
       ),
@@ -222,7 +219,12 @@ class _Header extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(child: Text('Календарь', style: text.displaySmall)),
-          DomainDropdown(domain: domain, onChanged: onDomain),
+          // «Жидкость» в календаре показана, но неактивна (нет дат-таймлайна).
+          DomainDropdown(
+            domain: domain,
+            onChanged: onDomain,
+            enabled: const {MediaDomain.watch},
+          ),
         ],
       ),
     );

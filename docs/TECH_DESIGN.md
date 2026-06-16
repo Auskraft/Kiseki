@@ -37,6 +37,7 @@
 |---|---|---|
 | `catalog_items` | Ядро картотеки (общие поля всех доменов) | `id` TEXT (UUID) |
 | `media_items` | Домен «медиа» (1:1 к ядру) | `item_id` TEXT = FK → `catalog_items.id` |
+| `vape_items` | Домен «жидкость для вейпа» (1:1 к ядру) | `item_id` TEXT = FK → `catalog_items.id` |
 | `images` | Картинки записи (**1:N**, общие для всех доменов) | `id` TEXT (UUID) |
 | `tags` | Справочник тегов (общий) | `id` TEXT (UUID) |
 | `item_tags` | Связь M:N карточка↔тег | составной (`item_id`,`tag_id`) |
@@ -46,13 +47,16 @@
 
 | Поле | Код в БД | Значения |
 |---|---|---|
-| `domain` | TEXT | `media` (далее `food`, `restaurant`, `vape`) |
+| `domain` | TEXT | `media` · `vape` (далее `food`, `restaurant`) |
 | `media_type` | TEXT | `movie` · `anime` · `drama` · `cartoon` · `documentary` · `concert` · `tv_show` · `ova` · `ona` · `tv_play` (вид-категория; подпись зависит от `format` — ADR-21) |
 | `format` | TEXT | `single` · `episodic` |
 | `status` | TEXT | `plan` · `watching` · `completed` · `paused` · `dropped` |
 | `unfinished_reason` | TEXT | `waiting_episodes` · `lost_quality` · `not_for_me` · `no_time` · `other` |
 | `country` | TEXT | ISO 3166-1 alpha-2 (`KR`, `JP`, `CN`, `TH`, `US`…), nullable |
 | `date_precision` | TEXT | `day` · `month` · `year` — точность каждой пользовательской даты |
+| `nicotine_type` (vape) | TEXT | `salt` · `alkaline` · `hybrid` |
+| `nicotine_strength` (vape) | TEXT | значение из списка по типу (есть диапазоны «1,5-3», «35-50») |
+| `flavor_category` (vape) | TEXT | `fruits` · `berries` · `drinks` · `desserts` · `tobacco` · `menthol` · `mixes`, nullable |
 
 ### Имена полей, которые легко перепутать (зафиксированы)
 

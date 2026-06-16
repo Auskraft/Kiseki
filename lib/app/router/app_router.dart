@@ -12,6 +12,7 @@ import '../../features/media/presentation/pages/media_detail_page.dart';
 import '../../features/media/presentation/pages/media_trash_page.dart';
 import '../../features/media/presentation/pages/settings_page.dart';
 import '../../features/media/presentation/pages/tags_page.dart';
+import '../../features/vape/presentation/pages/vape_detail_page.dart';
 
 /// Канонические пути навигации (A4) — единственный источник правды по
 /// маршрутам. Карточка адресуется по UUID (`/item/<id>`), значит пути менять
@@ -27,8 +28,11 @@ abstract final class AppRoute {
   static const theme = '/settings/theme';
   static const privacy = '/settings/privacy';
 
-  /// Карточка по UUID (deep-link).
+  /// Карточка медиа по UUID (deep-link).
   static String detail(String id) => '/item/$id';
+
+  /// Жидкость для вейпа по UUID.
+  static String vapeDetail(String id) => '/vape/$id';
 }
 
 /// Собирает go_router приложения. Создаётся один раз на монтирование дерева
@@ -53,6 +57,11 @@ GoRouter createAppRouter() => GoRouter(
           path: '/item/:id',
           builder: (context, state) =>
               MediaDetailPage(entryId: state.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: '/vape/:id',
+          builder: (context, state) =>
+              VapeDetailPage(entryId: state.pathParameters['id']!),
         ),
         GoRoute(
           path: AppRoute.settings,

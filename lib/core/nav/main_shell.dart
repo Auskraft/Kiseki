@@ -7,6 +7,7 @@ import '../../features/media/presentation/pages/kartoteka_page.dart';
 import '../../features/media/presentation/pages/main_screen.dart';
 import '../../features/media/presentation/pages/media_editor_page.dart';
 import '../../features/media/presentation/pages/settings_page.dart';
+import '../../features/vape/presentation/pages/vape_editor_page.dart';
 import 'capsule_nav_bar.dart';
 import 'classic_nav_bar.dart';
 import 'floating_nav_bar.dart';
@@ -62,6 +63,11 @@ class _MainShellState extends State<MainShell> {
                   icon: Icons.smart_display_rounded,
                   label: 'Добавить просмотр',
                   onTap: () => openMediaEditor(context),
+                ),
+                SpeedDialAction(
+                  icon: Icons.water_drop_rounded,
+                  label: 'Добавить жидкость',
+                  onTap: () => openVapeEditor(context),
                 ),
               ],
             )

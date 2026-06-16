@@ -8,21 +8,28 @@ import '../../../../core/catalog/watch_status.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/status_visuals.dart';
+import '../../../vape/domain/vape_repository.dart';
+import '../../../vape/presentation/cubit/vape_list_cubit.dart';
+import '../../../vape/presentation/widgets/vape_list_tile.dart';
 import '../../domain/media_repository.dart';
 import '../cubit/live_cards_cubit.dart';
 import '../widgets/domain_dropdown.dart';
 import '../widgets/editor/editor_primitives.dart';
 import '../widgets/media_list_tile.dart';
 
-/// Вкладка «Картотека»: плоский список всех карточек выбранного домена с
-/// быстрым фильтром по статусу (чипы). Домен — выпадашкой (Просмотр/Чтение).
+/// Вкладка «Картотека»: плоский список карточек выбранного домена. Домен —
+/// выпадашкой (Просмотр/Жидкость): медиа фильтруется чипами по статусу,
+/// жидкости — тугл-фильтром «можно покупать снова».
 class KartotekaPage extends StatelessWidget {
   const KartotekaPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => LiveCardsCubit(getIt<MediaRepository>()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => LiveCardsCubit(getIt<MediaRepository>())),
+        BlocProvider(create: (_) => VapeListCubit(getIt<VapeRepository>())),
+      ],
       child: const _KartotekaView(),
     );
   }
@@ -38,8 +45,11 @@ class _KartotekaView extends StatefulWidget {
 class _KartotekaViewState extends State<_KartotekaView> {
   MediaDomain _domain = MediaDomain.watch;
 
-  /// `null` — «Все»; иначе показываем только этот статус.
+  /// `null` — «Все»; иначе показываем только этот статус (медиа).
   WatchStatus? _status;
+
+  /// Фильтр жидкостей: показывать только отмеченные «можно покупать снова».
+  bool _onlyRebuy = false;
 
   @override
   Widget build(BuildContext context) {
@@ -62,8 +72,8 @@ class _KartotekaViewState extends State<_KartotekaView> {
                 ],
               ),
             ),
-            if (_domain == MediaDomain.reading)
-              const Expanded(child: ReadingComingSoon())
+            if (_domain == MediaDomain.vape)
+              Expanded(child: _vapeBody(context))
             else
               Expanded(child: _watchBody(context)),
           ],
@@ -104,6 +114,57 @@ class _KartotekaViewState extends State<_KartotekaView> {
                 itemBuilder: (_, i) => MediaListTile(
                   entry: items[i],
                   onTap: () => context.push(AppRoute.detail(items[i].id)),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _vapeBody(BuildContext context) {
+    final tk = context.tokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: EditorChip(
+              label: 'Можно покупать снова',
+              icon: Icons.replay_rounded,
+              accent: tk.success,
+              selected: _onlyRebuy,
+              onTap: () => setState(() => _onlyRebuy = !_onlyRebuy),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: BlocBuilder<VapeListCubit, VapeListState>(
+            builder: (context, state) {
+              if (state.loading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state.entries.isEmpty) {
+                return const _Empty(text: 'Пока нет жидкостей');
+              }
+              final items = _onlyRebuy
+                  ? state.entries.where((e) => e.canRebuy).toList()
+                  : state.entries;
+              if (items.isEmpty) {
+                return const _Empty(text: 'Нет отмеченных к покупке');
+              }
+              final bottomInset = MediaQuery.paddingOf(context).bottom;
+              return ListView.separated(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 24),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (_, i) => VapeListTile(
+                  entry: items[i],
+                  onTap: () => context.push(AppRoute.vapeDetail(items[i].id)),
                 ),
               );
             },
