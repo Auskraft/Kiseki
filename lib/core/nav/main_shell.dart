@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../features/media/presentation/pages/calendar_page.dart';
 import '../../features/media/presentation/pages/main_screen.dart';
 import '../../features/media/presentation/pages/media_editor_page.dart';
 import '../../features/media/presentation/pages/settings_page.dart';
@@ -44,10 +45,7 @@ class _MainShellState extends State<MainShell> {
     final items = navItemsFor(context.watch<MenuIconsCubit>().state);
     final builders = <WidgetBuilder>[
       (_) => const MainScreen(),
-      (_) => const ComingSoonPage(
-            title: 'Календарь',
-            icon: Icons.calendar_month_rounded,
-          ),
+      (_) => const CalendarPage(),
       (_) => const ComingSoonPage(
             title: 'Картотека',
             icon: Icons.grid_view_rounded,
