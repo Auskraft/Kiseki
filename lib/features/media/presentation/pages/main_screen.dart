@@ -15,7 +15,6 @@ import '../widgets/filter_sheet.dart';
 import '../widgets/media_card.dart';
 import '../widgets/media_list_tile.dart';
 import '../widgets/mini_poster.dart';
-import 'media_editor_page.dart';
 
 /// Главный экран — грид/список картотеки + полки «Жду серии»/«Смотрю сейчас»,
 /// поиск, фильтр и сортировка.
@@ -37,10 +36,6 @@ class MainScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-void _openEditor(BuildContext context) {
-  openMediaEditor(context);
 }
 
 void _openDetail(BuildContext context, String entryId) {
@@ -596,18 +591,12 @@ class _EmptyView extends StatelessWidget {
               child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
             ),
             const SizedBox(height: 20),
-            Text('Картотека пуста', style: text.headlineSmall),
+            Text('Здесь пока пусто', style: text.headlineSmall),
             const SizedBox(height: 6),
             Text(
-              'Добавьте первый фильм или сериал',
+              'Добавьте первую карточку кнопкой «Добавить»',
               style: text.bodyMedium,
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 22),
-            FilledButton.icon(
-              onPressed: () => _openEditor(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Добавить карточку'),
             ),
           ],
         ),

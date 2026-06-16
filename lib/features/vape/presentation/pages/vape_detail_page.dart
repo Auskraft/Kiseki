@@ -124,11 +124,20 @@ class _Body extends StatelessWidget {
             value: formatCatalogDate(entry.addedAt!),
           ),
         const SizedBox(height: 8),
-        _ToggleInfo(label: 'Можно покупать снова', value: entry.canRebuy),
-        _ToggleInfo(label: 'Мылится вкус', value: entry.flavorFades),
         _ToggleInfo(
-            label: 'Портит вату/картридж/испаритель',
-            value: entry.damagesHardware),
+            value: entry.canRebuy,
+            trueLabel: 'Можно покупать снова',
+            falseLabel: 'Можно покупать снова'),
+        _ToggleInfo(
+            value: entry.flavorFades,
+            goodValue: false,
+            trueLabel: 'Мылится вкус',
+            falseLabel: 'Вкус не мылится'),
+        _ToggleInfo(
+            value: entry.damagesHardware,
+            goodValue: false,
+            trueLabel: 'Портит вату/картридж/испаритель',
+            falseLabel: 'Не портит вату/картридж/испаритель'),
         const SizedBox(height: 18),
         _RatingsCard(entry: entry),
         if ((entry.flavorDescription ?? '').trim().isNotEmpty) ...[
@@ -197,23 +206,33 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _ToggleInfo extends StatelessWidget {
-  const _ToggleInfo({required this.label, required this.value});
+  const _ToggleInfo({
+    required this.value,
+    required this.trueLabel,
+    required this.falseLabel,
+    this.goodValue = true,
+  });
 
-  final String label;
   final bool value;
+  final String trueLabel;
+  final String falseLabel;
+
+  /// Значение, считающееся «хорошим» (зелёная галочка). Для негативных
+  /// признаков (мылится / портит железо) хорошо = `false`.
+  final bool goodValue;
 
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
-    final color = value ? tk.success : tk.onFaint;
+    final good = value == goodValue;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
-          Icon(value ? Icons.check_circle_rounded : Icons.cancel_outlined,
-              size: 18, color: color),
+          Icon(good ? Icons.check_circle_rounded : Icons.cancel_outlined,
+              size: 18, color: good ? tk.success : tk.onFaint),
           const SizedBox(width: 10),
-          Text(label,
+          Text(value ? trueLabel : falseLabel,
               style: TextStyle(fontSize: 13.5 * uiScale, color: tk.onBg)),
         ],
       ),

@@ -874,6 +874,7 @@ class _ProgressBlock extends StatelessWidget {
       title: 'Прогресс серий',
       badge: 'только для сериалов',
       accent: context.tokens.primary,
+      // 2×2 парами (текущее ↔ всего) — чтобы «Всего сезонов» не торчал один.
       child: Column(
         children: [
           Row(
@@ -886,6 +887,18 @@ class _ProgressBlock extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 9),
+              Expanded(
+                child: MiniStepper(
+                  label: 'Всего сезонов',
+                  value: state.totalSeasons,
+                  onChanged: cubit.setTotalSeasons,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Row(
+            children: [
               Expanded(
                 child: MiniStepper(
                   label: 'Серия',
@@ -901,19 +914,6 @@ class _ProgressBlock extends StatelessWidget {
                   onChanged: cubit.setTotalEpisodes,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 9),
-          Row(
-            children: [
-              Expanded(
-                child: MiniStepper(
-                  label: 'Всего сезонов',
-                  value: state.totalSeasons,
-                  onChanged: cubit.setTotalSeasons,
-                ),
-              ),
-              const Spacer(flex: 2),
             ],
           ),
         ],

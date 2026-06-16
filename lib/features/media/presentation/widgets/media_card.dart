@@ -51,7 +51,8 @@ class MediaCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  CoverImage(entry: entry),
+                  // full-разрешение (512px): thumb 150px пикселит в ~166px ячейке.
+                  CoverImage(entry: entry, full: true),
                   Positioned(
                     top: 6,
                     left: 6,

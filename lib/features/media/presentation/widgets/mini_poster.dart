@@ -45,7 +45,7 @@ class MiniPoster extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CoverImage(entry: entry, letterSize: 44),
+              CoverImage(entry: entry, full: true, letterSize: 44),
               Positioned(
                 top: 5,
                 left: 5,

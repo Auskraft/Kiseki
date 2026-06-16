@@ -36,7 +36,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Картотека пуста'), findsOneWidget);
+    expect(find.text('Здесь пока пусто'), findsOneWidget);
 
     await repo.create(const MediaDraft(
       title: 'Тестовый фильм',
