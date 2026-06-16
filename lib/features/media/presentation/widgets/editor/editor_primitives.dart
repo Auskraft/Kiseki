@@ -121,6 +121,13 @@ InputDecoration editorFieldDecoration(
   );
 }
 
+/// Снимает фокус с активного поля при тапе вне его — по кнопке, чипу, пустому
+/// месту. На мобильных Flutter по умолчанию `TextField.onTapOutside` — no-op,
+/// из-за чего клавиатура висит при переходе к другим контролам. Вешается на
+/// `onTapOutside` всех текстовых полей редактора (единая точка правды).
+void dismissKeyboardOnTapOutside(PointerDownEvent _) =>
+    FocusManager.instance.primaryFocus?.unfocus();
+
 /// Сегментированный выбор (равные сегменты). Активный — заливка primary.
 /// `value == null` — ни один сегмент не выбран (прогрессивная форма).
 class EditorSegments<T> extends StatelessWidget {

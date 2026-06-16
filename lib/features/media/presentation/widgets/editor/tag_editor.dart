@@ -104,6 +104,7 @@ class _TagEditorState extends State<TagEditor> {
             Expanded(
               child: TextField(
                 controller: _controller,
+                onTapOutside: dismissKeyboardOnTapOutside,
                 textInputAction: TextInputAction.done,
                 onChanged: (v) => setState(() => _query = v),
                 onSubmitted: (_) => _submit(),

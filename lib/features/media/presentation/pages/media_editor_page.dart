@@ -278,6 +278,8 @@ class _EditorFormState extends State<_EditorForm> {
                   ),
                   Flexible(
                     child: SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -332,6 +334,7 @@ class _EditorFormState extends State<_EditorForm> {
         TextField(
           controller: _title,
           onChanged: cubit.setTitle,
+          onTapOutside: dismissKeyboardOnTapOutside,
           textCapitalization: TextCapitalization.sentences,
           style: TextStyle(
             fontSize: 14.5 * uiScale,
@@ -428,6 +431,7 @@ class _EditorFormState extends State<_EditorForm> {
         TextField(
           controller: _note,
           onChanged: cubit.setNote,
+          onTapOutside: dismissKeyboardOnTapOutside,
           minLines: 3,
           maxLines: 6,
           maxLength: 256,
@@ -689,6 +693,7 @@ class _CoverInfoRow extends StatelessWidget {
               TextField(
                 controller: originalController,
                 onChanged: onOriginalChanged,
+                onTapOutside: dismissKeyboardOnTapOutside,
                 style: TextStyle(
                   fontSize: 14 * uiScale,
                   fontStyle: FontStyle.italic,
