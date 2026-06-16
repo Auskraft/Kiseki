@@ -308,7 +308,7 @@ class _EditorFormState extends State<_EditorForm> with WidgetsBindingObserver {
                   const _DragHandle(),
                   _SheetHeader(
                     title: state.mode == EditorMode.create
-                        ? 'Новая карточка'
+                        ? 'Добавить просмотр'
                         : 'Редактирование',
                     canSave: state.canSave,
                     saving: state.saving,

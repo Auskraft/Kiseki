@@ -59,7 +59,7 @@ void main() {
     await tester.pumpWidget(host());
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    expect(find.text('Новая карточка'), findsOneWidget);
+    expect(find.text('Добавить просмотр'), findsOneWidget);
 
     // Тип скрыт, пока не выбран формат; название — пока не выбран тип.
     expect(find.text('Тип'), findsNothing);
@@ -83,7 +83,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Шит закрылся (justSaved → Navigator.pop).
-    expect(find.text('Новая карточка'), findsNothing);
+    expect(find.text('Добавить просмотр'), findsNothing);
 
     // Дать Drift-стримам закрытого редактора отработать (иначе «pending timer»).
     await tester.pump(const Duration(seconds: 1));
@@ -144,7 +144,7 @@ void main() {
     await tester.tap(find.text('Продолжить'));
     await tester.pumpAndSettle();
     expect(find.text('Отменить создание?'), findsNothing);
-    expect(find.text('Новая карточка'), findsOneWidget);
+    expect(find.text('Добавить просмотр'), findsOneWidget);
 
     // Размонтируем дерево и даём Drift-подписке тегов закрыться (иначе
     // «pending timer» — редактор остаётся смонтированным с активным watch).

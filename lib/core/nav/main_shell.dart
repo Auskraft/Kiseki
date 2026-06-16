@@ -10,8 +10,8 @@ import 'classic_nav_bar.dart';
 import 'coming_soon_page.dart';
 import 'floating_nav_bar.dart';
 import 'menu_icons.dart';
+import 'add_speed_dial.dart';
 import 'nav_style.dart';
-import 'styled_fab.dart';
 
 /// Оболочка приложения: 4 вкладки (Главная/Календарь/Картотека/Настройки) в
 /// ленивом `IndexedStack` + выбранный пользователем нав-бар снизу + свайп между
@@ -61,10 +61,14 @@ class _MainShellState extends State<MainShell> {
       extendBody: true,
       body: _ShellBody(index: _index, builders: builders),
       floatingActionButton: _index == 0
-          ? StyledFab(
-              icon: Icons.add,
-              label: 'Добавить',
-              onPressed: () => openMediaEditor(context),
+          ? AddSpeedDial(
+              actions: [
+                SpeedDialAction(
+                  icon: Icons.smart_display_rounded,
+                  label: 'Добавить просмотр',
+                  onTap: () => openMediaEditor(context),
+                ),
+              ],
             )
           : null,
       // Обёртка-свайп здесь, а не в каждом баре — листание для всех 3 стилей.
