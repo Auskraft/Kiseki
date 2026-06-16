@@ -20,6 +20,8 @@ import 'package:kiseki/features/media/domain/media_format.dart';
 import 'package:kiseki/features/media/domain/media_repository.dart';
 import 'package:kiseki/features/media/domain/media_type.dart';
 import 'package:kiseki/features/media/presentation/cubit/media_list_cubit.dart';
+import 'package:kiseki/features/vape/data/vape_repository_impl.dart';
+import 'package:kiseki/features/vape/domain/vape_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Интеграция A4: реальная связка приложения — прикладные блоки провайдятся
@@ -40,6 +42,7 @@ void main() {
     db = AppDatabase(NativeDatabase.memory());
     final repo = MediaRepositoryImpl(db);
     getIt.registerSingleton<MediaRepository>(repo);
+    getIt.registerSingleton<VapeRepository>(VapeRepositoryImpl(db));
     getIt.registerSingleton<TagRepository>(TagRepositoryImpl(db));
     await repo.create(const MediaDraft(
       title: 'Сквозь снег',
@@ -90,5 +93,8 @@ void main() {
     // «Главная» — и в шапке экрана, и подписью вкладки в нав-баре.
     expect(find.text('Главная'), findsWidgets);
     expect(find.text('Сквозь снег'), findsWidgets);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 100));
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kiseki/app/di/injector.dart';
 import 'package:kiseki/core/database/app_database.dart';
 import 'package:kiseki/core/theme/kiseki_theme_id.dart';
 import 'package:kiseki/core/theme/kiseki_themes.dart';
@@ -13,6 +14,8 @@ import 'package:kiseki/features/media/domain/media_type.dart';
 import 'package:kiseki/features/media/presentation/cubit/media_list_cubit.dart';
 import 'package:kiseki/features/media/presentation/pages/main_screen.dart';
 import 'package:kiseki/features/media/presentation/widgets/media_list_tile.dart';
+import 'package:kiseki/features/vape/data/vape_repository_impl.dart';
+import 'package:kiseki/features/vape/domain/vape_repository.dart';
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
@@ -22,6 +25,8 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     final repo = MediaRepositoryImpl(db);
+    getIt.registerSingleton<VapeRepository>(VapeRepositoryImpl(db));
+    addTearDown(getIt.reset);
     await repo.create(const MediaDraft(
         title: 'Дюна', mediaType: MediaType.movie, format: MediaFormat.single));
     await repo.create(const MediaDraft(
@@ -53,5 +58,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.view_agenda_outlined));
     await tester.pumpAndSettle();
     expect(find.byType(MediaListTile), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 100));
   });
 }

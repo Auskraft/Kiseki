@@ -4,11 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/di/injector.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/catalog/watch_status.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/ui/skeletons.dart';
+import '../../../vape/domain/vape_entry.dart';
+import '../../../vape/domain/vape_repository.dart';
+import '../../../vape/presentation/cubit/vape_list_cubit.dart';
+import '../../../vape/presentation/widgets/vape_card.dart';
+import '../../../vape/presentation/widgets/vape_list_tile.dart';
 import '../../domain/media_entry.dart';
 import '../cubit/media_list_cubit.dart';
 import '../widgets/filter_sheet.dart';
@@ -23,15 +29,29 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: BlocBuilder<MediaListCubit, MediaListState>(
-          builder: (context, state) {
-            if (state.loading) return const MediaGridSkeleton();
-            if (state.isEmpty) return const _EmptyView();
-            return _HomeContent(state: state);
-          },
+    // Свой VapeListCubit (как в Картотеке): «Все карточки» на Главной — общий
+    // список медиа + жидкостей. Полки «Жду серии»/«Смотрю сейчас» и поиск пока
+    // медийные.
+    return BlocProvider(
+      create: (_) => VapeListCubit(getIt<VapeRepository>()),
+      child: Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: BlocBuilder<MediaListCubit, MediaListState>(
+            builder: (context, mState) {
+              return BlocBuilder<VapeListCubit, VapeListState>(
+                builder: (context, vState) {
+                  if (mState.loading || vState.loading) {
+                    return const MediaGridSkeleton();
+                  }
+                  if (mState.isEmpty && vState.entries.isEmpty) {
+                    return const _EmptyView();
+                  }
+                  return _HomeContent(state: mState, vape: vState.entries);
+                },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -42,21 +62,31 @@ void _openDetail(BuildContext context, String entryId) {
   context.push(AppRoute.detail(entryId));
 }
 
+void _openVapeDetail(BuildContext context, String entryId) {
+  context.push(AppRoute.vapeDetail(entryId));
+}
+
 class _HomeContent extends StatelessWidget {
-  const _HomeContent({required this.state});
+  const _HomeContent({required this.state, required this.vape});
 
   final MediaListState state;
+  final List<VapeEntry> vape;
 
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
     final waiting = state.waiting;
     final watchingNow = state.watchingNow;
+    // «Все карточки»: при поиске/фильтре — только медиа (поиск пока медийный);
+    // иначе медиа (в своей сортировке) + жидкости следом.
+    final List<Object> all = state.hasSearchOrFilter
+        ? state.items
+        : <Object>[...state.items, ...vape];
 
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-          child: _Header(count: state.items.length, waiting: waiting.length),
+          child: _Header(count: all.length, waiting: waiting.length),
         ),
         const SliverToBoxAdapter(child: _SearchBar()),
         if (state.noResults)
@@ -82,9 +112,9 @@ class _HomeContent extends StatelessWidget {
             ),
           SliverToBoxAdapter(child: _ResultsHeader(state: state)),
           if (state.viewMode == ViewMode.grid)
-            _GridSliver(items: state.items)
+            _GridSliver(items: all)
           else
-            _ListSliver(items: state.items),
+            _ListSliver(items: all),
         ],
       ],
     );
@@ -94,7 +124,7 @@ class _HomeContent extends StatelessWidget {
 class _GridSliver extends StatelessWidget {
   const _GridSliver({required this.items});
 
-  final List<MediaEntry> items;
+  final List<Object> items;
 
   @override
   Widget build(BuildContext context) {
@@ -108,10 +138,20 @@ class _GridSliver extends StatelessWidget {
           childAspectRatio: 0.58,
         ),
         delegate: SliverChildBuilderDelegate(
-          (context, i) => MediaCard(
-            entry: items[i],
-            onTap: () => _openDetail(context, items[i].id),
-          ),
+          (context, i) {
+            final item = items[i];
+            if (item is MediaEntry) {
+              return MediaCard(
+                entry: item,
+                onTap: () => _openDetail(context, item.id),
+              );
+            }
+            final vape = item as VapeEntry;
+            return VapeCard(
+              entry: vape,
+              onTap: () => _openVapeDetail(context, vape.id),
+            );
+          },
           childCount: items.length,
         ),
       ),
@@ -122,7 +162,7 @@ class _GridSliver extends StatelessWidget {
 class _ListSliver extends StatelessWidget {
   const _ListSliver({required this.items});
 
-  final List<MediaEntry> items;
+  final List<Object> items;
 
   @override
   Widget build(BuildContext context) {
@@ -130,13 +170,26 @@ class _ListSliver extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16, 0, 16, 72 + MediaQuery.of(context).padding.bottom),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (context, i) => Padding(
-            padding: const EdgeInsets.only(bottom: 9),
-            child: MediaListTile(
-              entry: items[i],
-              onTap: () => _openDetail(context, items[i].id),
-            ),
-          ),
+          (context, i) {
+            final item = items[i];
+            if (item is MediaEntry) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: MediaListTile(
+                  entry: item,
+                  onTap: () => _openDetail(context, item.id),
+                ),
+              );
+            }
+            final vape = item as VapeEntry;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 9),
+              child: VapeListTile(
+                entry: vape,
+                onTap: () => _openVapeDetail(context, vape.id),
+              ),
+            );
+          },
           childCount: items.length,
         ),
       ),

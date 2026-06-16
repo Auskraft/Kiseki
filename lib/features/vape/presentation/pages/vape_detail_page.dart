@@ -91,13 +91,19 @@ class _Body extends StatelessWidget {
         if (cover != null)
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadii.lg),
-            child: Image.file(
-              getIt<MediaPaths>().absFull(cover.id),
-              height: 220,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              gaplessPlayback: true,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            child: AspectRatio(
+              aspectRatio: 1, // квадратная карточка-обложка (не широкий баннер)
+              child: Image.file(
+                getIt<MediaPaths>().absFull(cover.id),
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                errorBuilder: (_, _, _) => Container(
+                  color: tk.surface3,
+                  alignment: Alignment.center,
+                  child: Icon(Icons.broken_image_outlined,
+                      color: tk.onFaint, size: 32),
+                ),
+              ),
             ),
           ),
         if (cover != null) const SizedBox(height: 16),
