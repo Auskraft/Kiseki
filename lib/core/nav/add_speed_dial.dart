@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../theme/app_dimens.dart';
 import '../theme/theme_context.dart';
+import 'fab_style.dart';
 import 'styled_fab.dart';
 
 /// Одно действие speed-dial: иконка мини-кнопки, подпись слева, обработчик.
@@ -100,6 +102,10 @@ class _AddSpeedDialState extends State<AddSpeedDial>
   }
 
   Widget _buildOverlay(BuildContext context) {
+    // Подпись у мини-кнопок — только при стиле FAB «С подписью»; для «Иконка»
+    // показываем лишь иконку (как и сама главная кнопка).
+    final labeled =
+        context.read<FabStyleCubit>().state.style == FabStyle.labeled;
     return Stack(
       children: [
         // Затемнение фона + закрытие по тапу вне.
@@ -126,6 +132,7 @@ class _AddSpeedDialState extends State<AddSpeedDial>
                 _MiniAction(
                   action: action,
                   animation: _curve,
+                  showLabel: labeled,
                   onTap: () => _run(action),
                 ),
               // Крестик ровно поверх главной кнопки (тот же стиль и размер).
@@ -142,17 +149,20 @@ class _AddSpeedDialState extends State<AddSpeedDial>
   }
 }
 
-/// Мини-действие: подпись-пилюля слева + круглая кнопка, центрированная под
-/// главной (ширина [_slot] = размер FAB). Появляется снизу вверх с затуханием.
+/// Мини-действие: круглая кнопка, центрированная под главной (ширина [_slot] =
+/// размер FAB), и — если включён стиль FAB «С подписью» ([showLabel]) — подпись-
+/// пилюля слева. Появляется «выплыванием» из FAB (scale+fade, без растяжения).
 class _MiniAction extends StatelessWidget {
   const _MiniAction({
     required this.action,
     required this.animation,
+    required this.showLabel,
     required this.onTap,
   });
 
   final SpeedDialAction action;
   final Animation<double> animation;
+  final bool showLabel;
   final VoidCallback onTap;
 
   /// Ширина слота под мини-кнопкой = ширина круглого [StyledFab] (центрируем
@@ -162,39 +172,48 @@ class _MiniAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tk = context.tokens;
-    return SizeTransition(
-      sizeFactor: animation,
-      axisAlignment: 1.0,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 14),
-        child: FadeTransition(
-          opacity: animation,
+    // Scale+Fade — proxy-размера, не меняют ширину. SizeTransition здесь нельзя:
+    // он растягивается во всю ширину и лево-выравнивает контент → всё «съезжает».
+    return FadeTransition(
+      opacity: animation,
+      child: ScaleTransition(
+        scale: animation,
+        alignment: Alignment.bottomRight,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 14),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-                decoration: BoxDecoration(
-                  color: tk.surface2,
-                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.18),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+              if (showLabel) ...[
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 13, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: tk.surface2,
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Text(
-                  action.label,
-                  style: TextStyle(
-                    fontSize: 13 * uiScale,
-                    fontWeight: FontWeight.w700,
-                    color: tk.onBg,
+                    child: Text(
+                      action.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13 * uiScale,
+                        fontWeight: FontWeight.w700,
+                        color: tk.onBg,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
               SizedBox(
                 width: _slot,
                 child: Center(
