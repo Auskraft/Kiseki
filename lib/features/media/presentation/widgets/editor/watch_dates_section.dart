@@ -209,7 +209,10 @@ Future<void> _pickMonthYear(
                     onPressed: () => Navigator.pop(
                       context,
                       (
-                        date: CatalogDate(
+                        // normalizeCatalogDate строит дату в UTC (как везде в
+                        // приложении) — иначе локальный DateTime в +TZ при
+                        // round-trip съезжает на месяц назад.
+                        date: normalizeCatalogDate(
                           DateTime(years[yTemp], mTemp + 1, 1),
                           DatePrecision.month,
                         )
